@@ -8,7 +8,7 @@ def download_file():
     host = '192.168.0.107'  # 호스트명만 입력. sftp:// 는 필요하지 않다.
     port = 24322  # 원격 서버의 포트 번호
     username = 'withfirst'  # 원격 서버 유저명
-    password = 'As841126!@'  # 원격 서버 접속 비밀번호
+    password = os.getenv("HOSTING_PASSWORD")  # 원격 서버 접속 비밀번호
 
     hostkeys = None
 
