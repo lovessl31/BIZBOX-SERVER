@@ -21,7 +21,8 @@ def bzb_tbs(cursor):
                       mb_idx INTEGER NOT NULL UNIQUE,    -- 계정 번호    
                       bms_email VARCHAR NOT NULL UNIQUE, -- 이용자 이메일                      
                       bms_name VARCHAR NOT NULL,         -- 이용자 이름
-                      phone_number TEXT NOT NULL UNIQUE, -- 이용자 번호                                       
+                      bms_area VARCHAR NOT NULL,         -- 지역 코드
+                      phone_number TEXT NOT NULL UNIQUE, -- 이용자 번호                                                             
                       created_date DATETIME NOT NULL,    -- 신청 일자
                       FOREIGN KEY (mb_idx) REFERENCES member(mb_idx) ON DELETE CASCADE                      
                       )                      

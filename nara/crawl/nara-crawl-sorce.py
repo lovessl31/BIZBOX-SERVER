@@ -564,6 +564,7 @@ if __name__ == "__main__":
             print("identifier :", identifier)
             main(identifier)
         except CustomException:
+            logger.info(f"{identifier} 작업 중 중복값이 발견되어 종료되었습니다.")
             print(f"{identifier} 작업 중 중복값이 발견되어 종료되었습니다.")
         except TimeoutError:
             main(identifier)  # [WinError 10060] → 너무 빠른 크롤링으로 인한 로봇으로 판단 => 재요청
