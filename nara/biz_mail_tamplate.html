@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>맞춤 입찰 공고 안내</title>
+    <style>
+        .container {
+            font-family: Arial, sans-serif;
+            width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+        .header {
+            background-color: #f8f8f8;
+            padding: 10px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .content table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .content table, .content th, .content td {
+            border: 1px solid #ddd;
+        }
+        .content th, .content td {
+            padding: 10px;
+            text-align: left;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            text-align: center;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>맞춤 입찰 공고 안내</h2>
+        </div>
+        <div class="content">
+            <p>안녕하세요! {{ customer_name }} 고객님,</p>
+            <p>고객님이 설정하신 업종코드 <{{industry_cd}}> 에 해당하는 맞춤 입찰 공고 안내드립니다.</p>
+            <table>
+                <tr>
+                    <th>공고명</th>
+                    <td>{{ bid_name }}</td>
+                </tr>
+                <tr>
+                    <th>공고 번호</th>
+                    <td>{{ bid_num }}</td>
+                </tr>
+                <tr>
+                    <th>발행처</th>
+                    <td>{{ bid_agency }}</td>
+                </tr>
+                <tr>
+                    <th>입찰 일시</th>
+                    <td>{{ bid_o_dt }}</td>
+                </tr>
+                <tr>
+                    <th>입찰 마감 일시</th>
+                    <td>{{ bid_c_dt }}</td>
+                </tr>
+                <tr>
+                    <th>사업 금액</th>
+                    <td>{{ amount }}</td>
+                </tr>
+                <tr>
+                    <th>추정 가격</th>
+                    <td>{{ est }}</td>
+                </tr>
+                <tr>
+                    <th>배정 예산</th>
+                    <td>{{ budget }}</td>
+                </tr>
+                <tr>
+                    <th>부가세</th>
+                    <td>{{ vat }}</td>
+                </tr>
+
+            </table>
+            <p>문의처: 위드퍼스트(1588-1588)</p>
+        </div>
+        <div class="footer">
+            본 메일은 발신 전용이므로 회신하실 수 없습니다.<br>
+            전라남도 나주시 우정로 10, 라동 304호 위드 퍼스트 대표이사: 김태환<br>
+            사업자등록번호: 220-81-02810 | 이메일: withfirst01@gmail.com<br>
+            Copyright withfirst Co.,Ltd. All Rights Reserved.
+        </div>
+    </div>
+</body>
+</html>
