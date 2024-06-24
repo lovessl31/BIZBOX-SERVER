@@ -7,9 +7,9 @@
 
 
 # 크롤링한 데이터들 제외
-/nara/crawl/json
-/nara/crawl/Nattachment
-
+nara/crawl/json/
+nara/crawl/Nattachment/
+nara/db/bizbox.db
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
