@@ -22,6 +22,7 @@ def bzb_tbs(cursor):
                       bms_email VARCHAR NOT NULL UNIQUE, -- 이용자 이메일                      
                       bms_name VARCHAR NOT NULL,         -- 이용자 이름
                       bms_area VARCHAR NOT NULL,         -- 지역 코드
+                      bms_taskCd VARCHAR NOT NULL,       -- 업무 코드
                       phone_number TEXT NOT NULL UNIQUE, -- 이용자 번호                                                             
                       created_date DATETIME NOT NULL,    -- 신청 일자
                       FOREIGN KEY (mb_idx) REFERENCES member(mb_idx) ON DELETE CASCADE                      
@@ -117,4 +118,15 @@ def bzb_tbs(cursor):
                       type VARCHAR NOT NULL,        -- 메일 유형
                       sent_time DATE,               -- 전송 시간                      
                       FOREIGN KEY (recipient) REFERENCES member(mb_email) ON DELETE CASCADE
+                      )''')
+
+
+    # 토큰 테이블
+    cursor.execute('''CREATE TABLE IF NOT EXISTS token
+                     (token_idx INTEGER PRIMARY KEY,    -- 토큰 번호                
+                      payload VARCHAR NOT NULL,         -- 페이로드
+                      mb_idx integer NOT NULL,          -- 멤버 번호
+                      status VARCHAR NOT NULL,          -- 토큰 상태
+                      exp_date datetime NOT NULL,       -- 만료시간
+                      created_date datetime NOT NULL    -- 생성시간
                       )''')
