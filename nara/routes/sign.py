@@ -1,11 +1,15 @@
 import datetime
 import os
 import sqlite3
+import traceback
 
-# from nara.utils import verification_code
-import re
+from nara import app, jwt_blocklist
 
-from flask import request, url_for, session
+# jwt token
+from flask_jwt_extended import (create_access_token, jwt_required, create_refresh_token, get_jwt,
+                                decode_token, get_jwt_identity, set_access_cookies)
+
+from flask import request, url_for
 import json
 from dotenv import load_dotenv
 
@@ -21,7 +25,6 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 
 
 
-# from nara import smtp_port, smtp_server, email_user, email_password
 load_dotenv()
 
 sign_api = Namespace('sign', description='사용자 등록 API', path='/biz')
@@ -33,6 +36,9 @@ MAIN_DB_PATH = r"C:\work\NARA_CRAWL\nara\db\bizbox.db"
 # 비밀키
 serializer = URLSafeTimedSerializer(os.getenv("URL_TOKEN_KEY"))
 
+
+
+
 @sign_api.route('/login')
 @sign_api.doc(description="로그인", params={'id': '사용자 이메일', 'password': '사용자 비밀 번호'})
 class login(Resource):
@@ -42,6 +48,8 @@ class login(Resource):
 
         POST 요청으로 사용자의 login을 처리합니다.
         """
+        client_ip = request.remote_addr
+        print(client_ip)
         form_data = request.form
         dump_data = json.dumps(form_data, ensure_ascii=False)
         data = json.loads(dump_data)
@@ -78,29 +86,83 @@ class login(Resource):
                 # 이메일 가입상태가 N 일때
                 elif member[4] == 'N':
                     return errorMessage(401, '인증되지 않은 계정입니다. 이메일 계정 인증이 필요합니다.')
+                # 해쉬된 비번 확인 후 로그인 성공한다면
                 if check_password_hash(member[2], mb_pw):
-                    # 세션 발급
-                    session['user_idx'] = member[0]
-                    session['user_id'] = member[1]
-                    session['user_name'] = member[3]
+                    #  유저의 인덱스와 아이디 값 할당
+                    mIdx = member[0]
+                    mId = member[1]
+                    mName = member[3]
+                    # jwt 토큰에 식별자를 넣고 토큰 생성.
+                    user_info = {"idx": mIdx,
+                                 "id": mId}
+                    access_token = create_access_token(identity=user_info)
+                    refresh_token = create_refresh_token(identity=user_info)
+
+                    r_token_data = decode_token(refresh_token)
+                    created_at = datetime.datetime.fromtimestamp(r_token_data.get('iat'))  # 토큰 생성일
+                    expired_at = datetime.datetime.fromtimestamp(r_token_data.get('exp'))  # 토큰 만료일
+                    status = 'N'  # 토큰 취소 여부
+                    print("mIdx:::::", mIdx)
+                    c.execute('''SELECT COUNT(*) FROM token WHERE mb_idx = ?''', (mIdx,))
+                    existing_token = c.fetchone()[0]
+
+                    if existing_token > 0:
+                        c.execute('''
+                            UPDATE token SET payload=?, created_date=?, exp_date=?, status=? WHERE mb_idx = ?
+                        ''', (refresh_token, created_at, expired_at, status, mIdx))
+                    else:
+                        c.execute('''
+                            INSERT INTO token (payload, mb_idx, created_date, exp_date, status) VALUES (?, ?, ?, ?, ?)
+                        ''', (refresh_token, mIdx, created_at, expired_at, status))
+
+                    conn.commit()
+                    conn.close()
+
                     result = {
                         'loginMsg': "Y",
-                        "resultCode": 200,
-                        'resultDesc': "Success",
-                        'resultMsg': f'{member[3]}님 환영 합니다.',
-                        'user_idx': member[0],
-                        'user_id': member[1]
+                        "accessToken": access_token,
+                        "refreshToken": refresh_token,
+                        'resultMsg': f'{mName}님 환영 합니다.'
                     }
-                    print(session)
+                    # JWT를 쿠키에 설정
+                    set_access_cookies(successMessage(result), access_token)
                     return successMessage(result)
                 else:
                     return errorMessage(401, '로그인에 실패하였습니다.')
             except KeyError as e:
                 return errorMessage(400, f"{str(e)} key가 누락되어 있습니다.")
             except Exception as e:
+                # 예외가 발생한 경우, 예외 정보와 스택 트레이스를 출력
+                print("에러가 발생했습니다.:")
+                print(f"에러 유형: {type(e).__name__}")
+                print(f"에러 메세지: {e}")
+                # 스택 트레이스 출력
+                traceback.print_exc()
                 return errorMessage(500, str(e))
         else:
             return errorMessage(400, 'parameter key Err!')
+
+
+
+@sign_api.route('/logout')
+class Logout(Resource):
+    @sign_api.response(200, 'Success')
+    @jwt_required()
+    def post(self):
+        try:
+            jti = get_jwt()['jti']  # jti : 토큰을 고유ID로 저장
+            rrr = get_jwt()
+            print(rrr)
+            jwt_blocklist.add(jti)  # jwt_blocklist : 토큰의 고유ID, 토큰 유지 기간, 토큰 유지 기간 설정 여부
+            response = successMessage("로그아웃이 정상 처리 되었습니다.")
+            # 쿠키에서 토큰 삭제
+            response.set_cookie(app.config['JWT_ACCESS_COOKIE_NAME'], '', expires=0)
+            response.set_cookie(app.config['JWT_REFRESH_COOKIE_NAME'], '', expires=0)
+            return response  # jwt_bloacklist에 jti만 넣어주고 나머지 생략하면 토큰 즉시 파괴
+        except sqlite3.Error as e:
+            return errorMessage(str(e))
+        except Exception as e:
+            return errorMessage(500, str(e))
 
 
 
@@ -260,16 +322,50 @@ class CheckId(Resource):
 
 
 
-@sign_api.route('/logout')
-class logout(Resource):
-    def get(self):
-        try:
-            # 세션에서 사용자 정보 제거
-            session.pop('user_idx', None)
-            session.pop('user_name', None)
-            return successMessage("로그아웃을 완료하였습니다.")
-        except Exception as e:
-            return errorMessage(500, str(e))
+
+# 액세스 토큰 재발급 엔드포인트
+@sign_api.route('/refresh')
+class Refresh(Resource):
+    @sign_api.response(200, 'Success')
+    @jwt_required(refresh=True)
+    def post(self):
+        """
+                        토큰 재발급
+
+                        post 요청으로 토큰 재발급 처리합니다.
+        """
+        data = get_jwt_identity()
+        refresh_payload = request.headers['Authorization'].replace('Bearer ', '')
+        print(f"토큰 재발급:{data}")
+        print(f"리프레시토큰:{refresh_payload}")
+        if refresh_payload:
+            try:
+                conn = sqlite3.connect(MAIN_DB_PATH)
+                cursor = conn.cursor()
+                cursor.execute('''SELECT payload FROM token WHERE payload = ?''', (refresh_payload,))
+                is_rf_token = cursor.fetchone()[0]
+                conn.commit()
+                conn.close()
+                user_info = {"idx": data['idx'],
+                             "id": data['id']
+                             }
+                if is_rf_token == refresh_payload:
+                    access_token = create_access_token(identity=user_info)
+                    result = {"accessToken": access_token,
+                              "resultCode": 200,
+                              'resultDesc': "토큰을 재발급 하였습니다."}
+                    set_access_cookies(successMessage(result), access_token)
+                    return successMessage(result)
+                else:
+                    return errorMessage(400, "일치 하는 토큰이 존재하지않습니다.")
+            except KeyError as e:
+                return errorMessage(400, f"{str(e)} key가 누락되어 있습니다.")
+            except sqlite3.Error as e:
+                return errorMessage(str(e))
+            except Exception as e:
+                return errorMessage(500, str(e))
+        else:
+            return errorMessage(400)
 
 
 
