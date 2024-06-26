@@ -657,6 +657,7 @@ def send_email(receiver_email, subject, body, mail_type):
 
 def save_to_database(From, to, subject, body, mail_type, status):
     try:
+        print("body", body)
         # 데이터 베이스 연결
         conn = sqlite3.connect(MAIN_DB_PATH)
         cursor = conn.cursor()
