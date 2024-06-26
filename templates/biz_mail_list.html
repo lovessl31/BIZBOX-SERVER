@@ -8,10 +8,10 @@
 </head>
 <body>
     <div style="max-width: 700px; min-width: 280px; margin: 0 auto;">
-        <div sytle="margin:0 0px">
+        <div style="margin:0 0px">
             <!-- header -->
             <p style="margin:0; padding:20px 0 10px; font-size:0; line-height:0; border-bottom:3px solid #242424;">
-                <img src="nara/static/logo.png" alt="비즈박스 로고" style="width:132px; height:auto">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="비즈박스로고" style="width: 132px; height: auto;">
             </p>
             <!-- content -->
             <div style="margin-top:20px; padding:40px 20px; background:#e6e8fd; text-align: center;">
@@ -28,8 +28,7 @@
                 <div style="display: table; width: 100%;">
                     <div style="display: table-header-group; font-weight: bold; border-bottom: 2px solid #000; background-color: #f0f0f0; color: #333; font-size: 16px;">
                         <div style="display: table-row;">
-                            <div    onclick="location.href='https://naver.com';"
-                                    style="display: table-cell; padding: 20px;">업종코드</div>
+                            <div style="display: table-cell; padding: 20px;">업종코드</div>
                             <div style="display: table-cell; padding: 20px;">공고명</div>
                             <div style="display: table-cell; padding: 20px;">발행처</div>
                             <div style="display: table-cell; padding: 20px;">입찰일시</div>
@@ -38,15 +37,14 @@
                     </div>
                     <div style="display: table-row-group;">
                         {% for bid in bids %}
-                        <div style="display: table-row; cursor: pointer; word-break: break-word; white-space: normal;"
-                             onclick="location.href='{{ url_for('detail', bid_id=bid.bid_id) }}';"
-                             onmouseover="this.style.color='#4D9FFF';"
-                             onmouseout="this.style.color='';">
-                            <div style="display: table-cell; padding: 8px;">{{ bid.industry_cd }}</div>
-                            <div style="display: table-cell; padding: 8px;">{{ bid.bid_name }}</div>
-                            <div style="display: table-cell; padding: 8px;">{{ bid.bid_agency }}</div>
-                            <div style="display: table-cell; padding: 8px;">{{ bid.bid_o_dt }}</div>
-                            <div style="display: table-cell; padding: 8px;">{{ bid.bid_c_dt }}</div>
+                        <div style="display: table-row; cursor: pointer; word-break: break-word; white-space: normal;">
+                            <a href="{{ url_for('detail', bid_id=bid.bid_id, _external=True) }}" style="display: table-cell; padding: 8px; text-decoration: none;">
+                                <div style="display: table-cell; padding: 8px;">{{ bid.industry_cd }}</div>
+                                <div style="display: table-cell; padding: 8px;">{{ bid.bid_name }}</div>
+                                <div style="display: table-cell; padding: 8px;">{{ bid.bid_agency }}</div>
+                                <div style="display: table-cell; padding: 8px;">{{ bid.bid_o_dt }}</div>
+                                <div style="display: table-cell; padding: 8px;">{{ bid.bid_c_dt }}</div>
+                            </a>
                         </div>
                         {% endfor %}
                     </div>

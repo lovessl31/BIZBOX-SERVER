@@ -1,7 +1,7 @@
 import datetime
 import os
 import sqlite3
-import traceback
+
 
 from nara import app, jwt_blocklist
 
@@ -17,7 +17,7 @@ from flask_restx import Namespace, Resource
 from werkzeug.security import check_password_hash, generate_password_hash
 from nara.utils.utils import successMessage, errorMessage, crudQuery, send_email
 from nara.utils.valid import is_valid_ep
-from nara.utils.err_handler import CustomValidException
+from nara.utils.err_handler import CustomValidException, DetailErrMessageTraceBack
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 
 
@@ -132,12 +132,7 @@ class login(Resource):
             except KeyError as e:
                 return errorMessage(400, f"{str(e)} key가 누락되어 있습니다.")
             except Exception as e:
-                # 예외가 발생한 경우, 예외 정보와 스택 트레이스를 출력
-                print("에러가 발생했습니다.:")
-                print(f"에러 유형: {type(e).__name__}")
-                print(f"에러 메세지: {e}")
-                # 스택 트레이스 출력
-                traceback.print_exc()
+                DetailErrMessageTraceBack(e)
                 return errorMessage(500, str(e))
         else:
             return errorMessage(400, 'parameter key Err!')

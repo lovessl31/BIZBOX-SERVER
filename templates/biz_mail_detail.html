@@ -1,19 +1,60 @@
-<!-- templates/biz_mail_detail.html -->
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Bid Detail</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>맞춤 입찰 공고 상세 정보</title>
 </head>
 <body>
-    <h1>{{ bid.bid_name }}</h1>
-    <p>Bid Agency: {{ bid.bid_agency }}</p>
-    <p>Opening Date: {{ bid.bid_o_dt }}</p>
-    <p>Closing Date: {{ bid.bid_c_dt }}</p>
-    <p>Amount: {{ bid.amount }}</p>
-    <p>Estimated Price: {{ bid.est_prise }}</p>
-    <p>Budget: {{ bid.budget }}</p>
-    <p>VAT: {{ bid.vat }}</p>
+    <div style="max-width: 700px; min-width: 280px; margin: 0 auto;">
+        <div style="margin: 0;">
+            <!-- header -->
+            <p style="margin: 0; padding: 20px 0 10px; font-size: 0; line-height: 0; border-bottom: 3px solid #242424;">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="비즈박스로고" style="width: 132px; height: auto;">
+            </p>
+            <!-- content -->
+            <div style="margin-top: 20px; padding: 40px 20px; background: #e6e8fd; text-align: center;">
+                <span style="display: block; font-size: 28px; color: #242424; font-weight: 600; line-height: 44px;">
+                    맞춤 입찰 공고 상세 정보
+                </span>
+            </div>
+            <div style="margin: 33px 0 0 0; text-align: center;">
+                <div style="padding: 20px; background-color: #f0f0f0; color: #333; font-size: 16px;">
+                    <p><strong>업종코드:</strong> {{ bid.industry_cd }}</p>
+                    <p><strong>공고명:</strong> {{ bid.bid_name }}</p>
+                    <p><strong>공고번호:</strong> {{ bid.uniqueCd }}</p>
+                    <p><strong>발행처:</strong> {{ bid.bid_agency }}</p>
+                    <p><strong>참가가능지역:</strong> {{ bid.area_name }}</p>
+                    <p><strong>입찰일시:</strong> {{ bid.bid_o_dt }}</p>
+                    <p><strong>입찰마감 일시:</strong> {{ bid.bid_c_dt }}</p>
+                    <p><strong>사업 금액:</strong> {{ bid.amount }}</p>
+                    <p><strong>추정 예산:</strong> {{ bid.est_prise }}</p>
+                    <p><strong>배정 예산:</strong> {{ bid.budget }}</p>
+                    <p><strong>부가세:</strong> {{ bid.vat }}</p>
+                    <p><strong>주요 내용:</strong> {{ bid.area_name }}</p>
+                    <!-- 추가 데이터 항목들 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- footer -->
+        <div style="margin: 50px 0 0; padding: 10px 0 0; border-top: solid 2px #756f6a;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tbody>
+                    <tr>
+                        <td style="padding: 27px 0 5px; color: #767676; font-size: 12px; line-height: 180%;">
+                            전라남도 나주시 우정로 10, 라동 304호 위드퍼스트 대표이사 : 김태환 <br>
+                            사업자등록번호 : <a href="#" style="font-size: 12px; color: #767676; text-decoration: none;" rel="noreferrer noopener" target="_blank">220-81-02810</a>   / 이메일 : withfirst01@gmail.com
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0 0 30px; font-family: arial; color: #767676; font-size: 10px; line-height: 180%;">
+                            Copyright withfirst Co.,Ltd. All Rights Reserved.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </body>
 </html>
