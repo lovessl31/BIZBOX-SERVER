@@ -86,19 +86,19 @@ class Bms(Resource):
 
                         # 중간 테이블 데이터 삽입
 
-                        if result.status_code < 400 and isinstance(result, list):
+                        if isinstance(result, list):
                             middle_data["bms_idx"] = result[1]
                             for industry in industry_list:
                                 middle_data["industry_cd"] = industry
                                 crudQuery('c', MAIN_DB_PATH, middle_data, 'bms_industry')
                             return result[0]
-                        else:
+                        elif result.status_code >= 400:
                             conn.rollback()
-                            return errorMessage(403, "이미 등록된 사용자 입니다.")
+                            return errorMessage(403, "이미 서비스에 등록된 사용자 입니다.")
+                        else:
+                            return errorMessage(403, "예상하지 못한 문제가 발생하였습니다.")
                     else:
                         return errorMessage(400, "존재 하지 않는 사용자 입니다.")
-                except requests.exceptions.RequestException as e:
-                    print(f"Request failed: {e}")
                 except CustomValidException as e:
                     print(500)
                     return errorMessage(e.status_code, e.message)
@@ -108,7 +108,9 @@ class Bms(Resource):
             else:
                 return errorMessage(400, "잘못된 파라미터 입니다.")
         else:
-            return errorMessage(401, "세션이 존재하지 않습니다. 다시 로그인하여 주세요.")
+            return errorMessage(401, "토큰이 존재하지 않습니다. 다시 로그인하여 주세요.")
+
+
 
 
 
@@ -120,3 +122,5 @@ class Bms(Resource):
     #                       'area': '지역 그룹 번호',
     #                       })
     # def get(self):
+
+
