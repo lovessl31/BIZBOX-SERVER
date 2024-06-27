@@ -49,9 +49,31 @@ class Bms(Resource):
             if all(data[key] for key in required_fields):
                 # 업종 코드 양식 검증
                 try:
+                    conn = sqlite3.connect(MAIN_DB_PATH)
+                    c = conn.cursor()
+
+                    # 문자 템플릿 유효성
                     is_valid_ep('email', data["email"])
                     is_valid_ep('industry', data['industry_code'])
                     is_valid_ep('phone', data['phone_number'])
+
+                    # 업종 코드 유효성 검사
+                    industry_codes = data['industry_code'].split(',')  # 문자열을 콤마로 분리하여 리스트로 변환
+                    industry_list = [int(code) for code in industry_codes]  # 문자열을 정수형으로 변환한 리스트 생성
+
+                    query = f"SELECT option_value FROM bid_option WHERE option_group = 'industry' AND option_value IN ({','.join('?' for _ in industry_list)})"
+                    c.execute(query, industry_list)
+
+                    existing_industries = [result[0] for result in c.fetchall()]
+
+                    # 존재하지 않는 업종 코드 찾기
+                    non_existing_industries = [code for code in industry_codes if code not in existing_industries]
+
+                    # 모든 업종 코드가 존재하는지 확인
+                    if len(non_existing_industries) > 0:
+                        non_existing_codes = ','.join(map(str, non_existing_industries))
+                        return errorMessage(403, f"존재하지 않는 업종 코드가 포함되어 있습니다 : {non_existing_codes}")
+
                     # 변경할 키
                     key_mapping = {
                         'email': 'bms_email',
@@ -68,13 +90,11 @@ class Bms(Resource):
                     print(mIdx)
                     print(mId)
                     # 토큰의 유저 idx와 이름이 현재 유저 테이블에 존재하는지 확인.
-                    conn = sqlite3.connect(MAIN_DB_PATH)
-                    c = conn.cursor()
                     c.execute('''SELECT count(*) FROM member WHERE mb_idx = ? AND mb_id = ?'''
                               , (mIdx, mId))
                     check = c.fetchone()[0]
                     middle_data = {}
-                    industry_list = [int(num) for num in select_key_data['industry_cd'].split(',')]
+
                     # 안쓰는 키 삭제
                     del select_key_data['industry_cd']
 
@@ -85,10 +105,10 @@ class Bms(Resource):
                         result = crudQuery('c', MAIN_DB_PATH, select_key_data, 'bms_tbs')
 
                         # 중간 테이블 데이터 삽입
-
                         if isinstance(result, list):
                             middle_data["bms_idx"] = result[1]
                             for industry in industry_list:
+                                # DB에서 검증
                                 middle_data["industry_cd"] = industry
                                 crudQuery('c', MAIN_DB_PATH, middle_data, 'bms_industry')
                             return result[0]
