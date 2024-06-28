@@ -299,10 +299,18 @@ def extract_details(sb_soup):
         vatyn = details.get('부가가치세포함여부')[:6]
         print("vatyn: ", vatyn)
         if vatyn == '부가세 포함':
-            details['추정가격'] = details['배정예산']
+            # 사업 금액이 추정가격 계산에 더 정확함
+            if details['사업금액(추정가격 + 부가세)'] is not None:
+                details['추정가격'] = details['사업금액(추정가격 + 부가세)']
+            else:
+                details['추정가격'] = details['배정예산']
         else:
-            emptyPrice = calculate_empty_vat(details['배정예산'])
+            if details['사업금액(추정가격 + 부가세)'] is not None:
+                emptyPrice = calculate_empty_vat(details['사업금액(추정가격 + 부가세)'])
+            else:
+                emptyPrice = calculate_empty_vat(details['배정예산'])
             details['추정가격'] = emptyPrice
+
 
     return details
 
@@ -319,6 +327,7 @@ def crawl_website(response, soup, current_dir, industry_cd, last_five_urls):
         # 웹 페이지에서 제목과 링크를 가져와서 articles 리스트에 추가
         for article in soup.select('#resultForm > div.results > table > tbody > tr'):
             address = article.select_one('td.tl > div > a')['href']  # 주소값
+            print(address)
             # 이전 페이지 마지막 값과 같으면 다음걸 넘어가서 다음걸 읽음
             if address in last_five_urls:
                 continue
@@ -392,7 +401,6 @@ def crawl_website(response, soup, current_dir, industry_cd, last_five_urls):
 
                 # 세부 첨부파일
                 attachments = extract_attachments(sb_soup, unique_id, current_dir, industry_cd, notice_idx)
-
                 # 저장
                 articles.append({
                     '주소': address,
@@ -558,7 +566,12 @@ def main(industry_cd):
 
 # 실행
 if __name__ == "__main__":
-    identifiers = [1468, 1172, 5]  # 작업할 identifier 목록
+    conn = sqlite3.connect(MAIN_DB_PATH)
+    c = conn.cursor()
+    c.execute('''SELECT DISTINCT industry_cd AS '업종코드' FROM bms_industry''')
+    before_data = [int(item[0]) for item in c.fetchall()]
+    identifiers = before_data  # 작업할 identifier 목록
+    print(identifiers)
     for identifier in identifiers:
         try:
             print("identifier :", identifier)
