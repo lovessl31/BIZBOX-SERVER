@@ -13,8 +13,9 @@ def is_valid_ep(t, v):
     p_regex = r'^[0-9]{10,11}'
     industry_regex = r'^(\d+)(,\d+){0,2}$'
     task_regex = r'^([0-1-2-3-5-6-11-4-20])(,([0-1-2-3-5-6-11-4-20])){0,2}$'
-    area_regex = r'^([00|11|26|27|28|29|31|30|36|41|48|43|44|46|47|48|50|51|52])(,([00|11|26|27|28|29|31|30|36|41|48|43|44|46|47|48|50|51|52])){0,2}$'
-    keyword_regex = r'^$|^([a-zA-Z0-9]{1,20})(,([a-zA-Z0-9]{1,20})){0,2}$'
+    area_regex = r'^(00|11|26|27|28|29|31|30|36|41|48|43|44|46|47|50|51|52)(,(00|11|26|27|28|29|31|30|36|41|48|43|44|46|47|50|51|52)){0,2}$'
+
+    keyword_regex = r'^$|^([a-zA-Z0-9가-힣]{1,20})(,([a-zA-Z0-9가-힣]{1,20})){0,2}$'
 
     if t == 'email' and re.match(e_regex, v) is None:
         raise CustomValidException('email regex err!', 400)
@@ -27,9 +28,12 @@ def is_valid_ep(t, v):
     elif t == 'industry' and re.match(industry_regex, v) is None:
         raise CustomValidException('산업 코드는 하나에서 세 개의 숫자로 구성되며, 두 개 이상일 때는 쉼표로 구분되어야 합니다', 400)
     elif t == 'task' and re.match(task_regex, v) is None:
-            raise CustomValidException('task는 0, 1, 2, 3, 5, 6, 11, 4, 20 중 하나 이상, 세 개 이하로 쉼표로 구분되어야 합니다', 400)
+        raise CustomValidException('task는 0, 1, 2, 3, 5, 6, 11, 4, 20 중 하나 이상, 세 개 이하로 쉼표로 구분되어야 합니다', 400)
     elif t == 'area' and re.match(area_regex, v) is None:
-            raise CustomValidException('지역은 지역코드 중 하나 이상, 세 개 이하로 쉼표로 구분되어야 합니다', 400)
+        raise CustomValidException('지역은 지역코드 중 하나 이상, 세 개 이하로 쉼표로 구분되어야 합니다', 400)
     elif t == 'keyword' and re.match(keyword_regex, v) is None:
-            raise CustomValidException('keyword는 각 1~20자의 문자열을 최대 3개까지 쉼표로 구분하여 입력할 수 있습니다', 400)
+        raise CustomValidException('keyword는 각 1~20자의 문자열을 최대 3개까지 쉼표로 구분하여 입력할 수 있습니다', 400)
     return
+
+
+
