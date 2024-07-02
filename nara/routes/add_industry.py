@@ -7,29 +7,42 @@ from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_restx import Namespace, Resource
 # 함수 모음
-from nara.utils.utils import errorMessage, crudQuery
+from nara.utils.utils import errorMessage, crudQuery, successMessage
 from nara.utils.valid import is_valid_ep
 from nara.utils.err_handler import CustomValidException, DetailErrMessageTraceBack
 
-
-
 bid_api = Namespace('bid', description='사용자 등록 API', path='/biz')
-
 
 # DB 접속 경로
 MAIN_DB_PATH = r"C:\work\NARA_CRAWL\nara\db\bizbox.db"
 
 
+
+
+# 중복 코드 함수화
+def insert_data(idx, table_name, data_list, key_name):
+    """
+    :type data_list: list
+    """
+    middle_data = {"bms_idx": idx}
+    for data_item in data_list:
+        middle_data[f"{key_name}"] = data_item
+        insert_check = crudQuery('c', MAIN_DB_PATH, middle_data, table_name)
+        if not isinstance(insert_check, list):
+            return False
+    return True
+
 @bid_api.route('/get-bms')
 class Bms(Resource):
     @bid_api.doc(description="서비스 등록",
-                  params={'email': '이용 이메일',
-                          'name': '이용자 명',
-                          'phone_number': '이용자 번호',
-                          'industry_code': "업종 번호",
-                          'area': '지역 그룹 번호',
-                          'task': '업무 명'
-                          })
+                 params={'email': '이용 이메일',
+                         'name': '이용자 명',
+                         'phone_number': '이용자 번호',
+                         'industry_code': "업종 번호",
+                         'area': '지역 그룹 번호',
+                         'task': '업무 명',
+                         'keyword': '키워드'
+                         })
     @jwt_required()
     def post(self):
         """
@@ -42,7 +55,7 @@ class Bms(Resource):
         data = json.loads(dump_data)
         # 토큰에서 데이터 추출
         tInfo = get_jwt_identity()
-        required_fields = ['email', 'name', 'phone_number', 'industry_code', 'area', 'task']
+        required_fields = ['email', 'name', 'phone_number', 'industry_code', 'area', 'task', 'keyword']
         print(data)
         if 'idx' in tInfo and 'id' in tInfo:
             print(tInfo['idx'], tInfo['id'])
@@ -53,9 +66,13 @@ class Bms(Resource):
                     c = conn.cursor()
 
                     # 문자 템플릿 유효성
-                    is_valid_ep('email', data["email"])
-                    is_valid_ep('industry', data['industry_code'])
-                    is_valid_ep('phone', data['phone_number'])
+                    for v_type in required_fields:
+                        if v_type == 'name':
+                            continue
+                        elif v_type == 'industry_code':
+                            is_valid_ep('industry', data[v_type])
+                        else:
+                            is_valid_ep(v_type, data[v_type])
 
                     # 업종 코드 유효성 검사
                     industry_codes = data['industry_code'].split(',')  # 문자열을 콤마로 분리하여 리스트로 변환
@@ -74,17 +91,33 @@ class Bms(Resource):
                         non_existing_codes = ','.join(map(str, non_existing_industries))
                         return errorMessage(403, f"존재하지 않는 업종 코드가 포함되어 있습니다 : {non_existing_codes}")
 
+                    # 중간 테이블에 삽입할 각각의 리스트 가져오기
+                    area_list = data['area'].split(',')
+                    task_list = data['task'].split(',')
+                    keyword_list = data['keyword'].split(',')
+                    print(f'''
+                    {industry_codes},
+                    {industry_list},
+                    {area_list},
+                    {task_list},
+                    {keyword_list},
+                    ''')
                     # 변경할 키
                     key_mapping = {
                         'email': 'bms_email',
-                        'name': 'bms_name',
-                        'industry_code': 'industry_cd',
-                        'task': 'bms_taskCd',
-                        'area': 'bms_area'
+                        'name': 'bms_name'
                     }
                     # 키를 변경한 튜플 리스트
                     select_key_data = {key_mapping.get(k, k): v for k, v in data.items()}
+
+                    # 안쓰는 키 삭제
+                    del select_key_data['industry_code']
+                    del select_key_data['task']
+                    del select_key_data['area']
+                    del select_key_data['keyword']
+
                     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
                     mIdx = tInfo['idx']
                     mId = tInfo['id']
                     print(mIdx)
@@ -93,10 +126,6 @@ class Bms(Resource):
                     c.execute('''SELECT count(*) FROM member WHERE mb_idx = ? AND mb_id = ?'''
                               , (mIdx, mId))
                     check = c.fetchone()[0]
-                    middle_data = {}
-
-                    # 안쓰는 키 삭제
-                    del select_key_data['industry_cd']
 
                     if check > 0:
                         # 서비스 테이블 데이터 삽입
@@ -106,12 +135,17 @@ class Bms(Resource):
 
                         # 중간 테이블 데이터 삽입
                         if isinstance(result, list):
-                            middle_data["bms_idx"] = result[1]
-                            for industry in industry_list:
-                                # DB에서 검증
-                                middle_data["industry_cd"] = industry
-                                crudQuery('c', MAIN_DB_PATH, middle_data, 'bms_industry')
-                            return result[0]
+                            bms_idx = result[1]
+                            # 삽입할 데이터 리스트
+                            indusInsert = insert_data(bms_idx, 'bms_industry', industry_list, key_name="industry_cd")
+                            areaInsert = insert_data(bms_idx, 'bms_area', area_list, key_name='bms_area')
+                            taskInsert = insert_data(bms_idx, 'bms_task', task_list, key_name='bms_taskCd')
+                            keyInsert = insert_data(bms_idx, 'bms_keyword', keyword_list, key_name="bms_keyword")
+                            if False in [indusInsert, areaInsert, taskInsert, keyInsert]:
+                                return errorMessage(403, "중간 테이블 데이터 삽입이 잘못되었습니다.")
+                            # 모두 삽입시 성공 메세지 출력
+                            return successMessage()
+                        
                         elif result.status_code >= 400:
                             conn.rollback()
                             return errorMessage(403, "이미 서비스에 등록된 사용자 입니다.")
@@ -130,10 +164,6 @@ class Bms(Resource):
         else:
             return errorMessage(401, "토큰이 존재하지 않습니다. 다시 로그인하여 주세요.")
 
-
-
-
-
     # @bid_api.doc(description="서비스 등록",
     #               params={'email': '이용 이메일',
     #                       'name': '이용자 명',
@@ -142,5 +172,3 @@ class Bms(Resource):
     #                       'area': '지역 그룹 번호',
     #                       })
     # def get(self):
-
-
