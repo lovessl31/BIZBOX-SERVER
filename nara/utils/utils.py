@@ -86,6 +86,12 @@ def get_file_type_and_extension(file_name):
     # MIME 타입 추출
     file_type, _ = mimetypes.guess_type(file_name)
 
+    # 추가 파일 유형 처리 (cell)
+    if file_type is None:
+        if file_ext == '.cell':
+            file_type = 'application/vnd.custom.cell'  # 예시로 커스텀 MIME 타입을 할당함
+        else:
+            file_type = 'application/octet-stream'  # 기본 bynary 파일 타입
     return file_type, file_ext
 
 def errorMessage(num, detailErrors=None):
@@ -136,7 +142,7 @@ def errorMessage(num, detailErrors=None):
 
 
 # api 성공 메시지 호출
-message = {"message":"요청을 성공적으로 처리하였습니다."}
+message = {"message": "요청을 성공적으로 처리하였습니다."}
 def successMessage(data=message):
     success_message = {"result": "success",
                        "data": data,
@@ -368,22 +374,11 @@ def insert_bid_notice(c, industry_cd, title, np_number, demand_agency, tender_op
 import re
 
 def generate_area_list(area):
-    if not area == '':
-        # original_str = '[전주] [광주] [경남]'
-        #
-        # # 대괄호 제거
-        # modified_str = original_str.replace('[', '').replace(']', '')
-        #
-        # # 결과 출력
-        # print(modified_str.split(' '))  # ['전주', '광주', '경남']
-
-        # 앞부분 추출
-        first_str_matches = re.findall(r'\[?([^ \[\]]+)\]?', area)
-        match_value = []
-        # 전체 추출
+    if area:
+        # 전체 지역 이름 추출
         matches = re.findall(r'\[([^]]+)\]', area)
 
-        # 키 값을 담은 객체 만들고
+        # 지역 코드 매핑
         area_map = {
             '서울특별시': '11',
             '부산광역시': '26',
@@ -405,13 +400,17 @@ def generate_area_list(area):
             '전라북도': '52',
             '전북특별자치도': '52'
         }
-        # 크롤링한 데이터와 일치하는 코드 추출해서 배열에 담기
-        for v in first_str_matches:
-            if v in area_map:
-                code = area_map[v]
-                match_value.append(code)
-        print("matches", matches)
 
+        # 매칭되는 지역 코드 추출
+        match_value = []
+        for match in matches:
+            # 매칭된 문자열의 첫 부분 추출 (예: '경기도' from '경기도 과천시')
+            first_part = match.split()[0]
+            if first_part in area_map:
+                code = area_map[first_part]
+                match_value.append(code)
+
+        # 지역 리스트 딕셔너리 생성
         area_list = {key: value for key, value in zip(match_value, matches)}
         print(area_list)
         return area_list
@@ -581,7 +580,17 @@ def service_send_email(receiver_email, subject, body, mail_type, html_content):
     # 서비스의 바디는 딕셔너리 형태이므로 문자열로 바꿔주기
     # 메일링이 아닌 메일로그때문에
     # body = {key: str(value) for key, value in body.items()} # 안에 있는 키값만 문자열이 돼서 사용불가
-    body = json.dumps(body, ensure_ascii=False)
+    if isinstance(body, list):
+        print(46494894348)
+        # bid_id 필드만 추출하여 리스트로 변환
+        bid_ids = [str(item['bid_id']) for item in body]
+
+        # 리스트를 문자열로 변환
+        bid_ids_str = ','.join(bid_ids)
+        body = f"bid_notice tbs np_idx : {bid_ids_str} 을(를) 메일 발송"
+        print(bid_ids_str)
+    else:
+        body = '리스트 타입이 아닌 메일이 들어옴'
     # Attach the HTML content to the email
     html_part = MIMEText(html_content, 'html')
     message.attach(html_part)
@@ -658,6 +667,9 @@ def send_email(receiver_email, subject, body, mail_type):
 def save_to_database(From, to, subject, body, mail_type, status):
     try:
         print("body", body)
+        print("bodytype : ", type(body))
+        print(From, to, subject, mail_type, status)
+
         # 데이터 베이스 연결
         conn = sqlite3.connect(MAIN_DB_PATH)
         cursor = conn.cursor()
@@ -672,6 +684,9 @@ def save_to_database(From, to, subject, body, mail_type, status):
         print(f"데이터베이스 오류 발생: {e}")
     except Exception as e:
         print(f"기타 오류 발생: {e}")
+
+
+
 
 
 

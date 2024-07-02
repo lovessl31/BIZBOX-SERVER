@@ -210,7 +210,9 @@ class signup(Resource):
                 print(result[1])
                 if isinstance(result, list):
                     # 이메일 인증 토큰 생성
-                    token = serializer.dumps(new_data['mb_email'], salt='email-confirm')
+                    mb_email = new_data['mb_email']
+                    mb_id = new_data['mb_id']
+                    token = serializer.dumps({'mb_email': mb_email, 'mb_id': mb_id}, salt='email-confirm')
 
                     # 인증 이메일 전송
                     link = url_for('sign_verify_email', token=token, _external=True)
@@ -236,12 +238,19 @@ class signup(Resource):
 class VerifyEmail(Resource):
     def get(self, token):
         try:
-            email = serializer.loads(token, salt='email-confirm', max_age=3600)
-            print(email)
-            data = {"status": "Y"}
-            condition = 'mb_email = ?'
-            param = (email,)
-            get_db_data = crudQuery('u', MAIN_DB_PATH, data, 'member', condition, None, param)
+            data = serializer.loads(token, salt='email-confirm', max_age=3600)
+            mb_email = data['mb_email']
+            mb_id = data['mb_id']
+            editData = {"status": "Y"}
+            condition = 'mb_email = ? AND mb_id = ?'
+            param = (mb_email, mb_id)
+            get_db_data = crudQuery('u', MAIN_DB_PATH, editData, 'member', condition, None, param)
+
+            # 인증 되지 않은 기존 같은 이메일 삭제
+            delCondition = 'mb_email = ? AND status = ?'
+            delParam = (mb_email, 'N')
+            crudQuery('d', MAIN_DB_PATH, None, 'member', delCondition, None, delParam)
+
             if isinstance(get_db_data, dict):
                 return successMessage(f"이메일이 성공적으로 인증되었습니다. Token: {token}")
             else:
@@ -269,7 +278,7 @@ class CheckEmail(Resource):
             is_valid_ep('email', email)
             conn = sqlite3.connect(MAIN_DB_PATH)
             curser = conn.cursor()
-            curser.execute('''SELECT count(*) FROM member WHERE mb_email = ?''', (email,))
+            curser.execute('''SELECT count(*) FROM member WHERE mb_email = ? AND status = 'Y' ''', (email,))
             check = curser.fetchone()[0]
             if check > 0:
                 print('x')

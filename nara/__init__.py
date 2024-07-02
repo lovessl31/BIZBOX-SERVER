@@ -6,7 +6,7 @@ from datetime import timedelta
 import sqlite3
 import os
 
-from send_bid_mail import send_bid_mailing
+from nara.send_bid_mail import send_bid_mailing
 
 from dotenv import load_dotenv
 from nara.utils.err_handler import CustomValidException
@@ -48,7 +48,8 @@ def detail(bid_id):
                  FROM bid_notice b
                  LEFT JOIN bid_notice_area ba
                  ON b.np_idx = ba.np_idx
-                 WHERE b.np_idx = ?''', (bid_id,))
+                 WHERE b.np_idx = ?
+                 AND b.created_date >= DATETIME('now', '-4 hour', 'localtime')''', (bid_id,))
     bid = c.fetchone()
 
     if not bid:
@@ -89,13 +90,12 @@ def check_if_token_in_blocklist(jwt_header, jwt_payload):
 # JWT 및 앱설정
 app.config['JWT_SECRET_KEY'] = os.getenv("T_S_KEY")
 app.config['SECRET_KEY'] = os.getenv("S_KEY")
-access_exp = timedelta(minutes=1)
+access_exp = timedelta(minutes=30)
 refresh_exp = timedelta(days=3)
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = access_exp
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = refresh_exp
 
 print(app.config)
-
 
 
 from nara.routes.sign import sign_api
@@ -108,34 +108,25 @@ api.add_namespace(bid_api)
 # 백그라운드 작업 스케줄러
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from apscheduler.triggers.interval import IntervalTrigger
-import atexit
+
+
+# bid_mailing 함수에게 인자로 넘겨주자
+initUrlFor = url_for
 
 
 # APScheduler 설정
 scheduler = BackgroundScheduler()
-# scheduler.add_job(func=send_bid_mailing, trigger="cron", minute=10)  # 매 시간 10분에 실행
-# scheduler.add_job(func=send_bid_mailing, trigger=IntervalTrigger(seconds=10))  # 매 2시간마다 실행
-scheduler.add_job(func=lambda: send_bid_mailing(app), trigger=CronTrigger(hour='0/2'))# 0시부터 24시까지
-
-# 앱이 종료될 때 스케줄러를 종료합니다.
+scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger=CronTrigger(hour='0/2'))# 0시부터 24시까지
 
 
-# app.before_request(lambda: send_bid_mailing(app))
-
-
-# 넘겨주기 위한
-initUrlFor = url_for
-
-def test_send_bid_mailing(app, initUrlFor):
-    with app.app_context():
-        send_bid_mailing(app, initUrlFor)
+# def test_send_bid_mailing(app, initUrlFor):
+#     with app.app_context():
+#         send_bid_mailing(app, initUrlFor)
 
 
 # 스케줄러 시작
 try:
     if __name__ == '__main__':
-        test_send_bid_mailing(app, initUrlFor)
         scheduler.start()
         app.run(debug=False, use_reloader=False, port=3001, host='192.168.0.18')
 except (KeyboardInterrupt, SystemExit):

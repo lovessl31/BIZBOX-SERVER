@@ -9,7 +9,7 @@ MAIN_DB_PATH = r"C:\work\NARA_CRAWL\nara\db\bizbox.db"
 
 # service_send_email(receiver_email, subject, body, mail_type, html_content)
 def send_bid_mailing(app, initUrlFor):
-    with current_app.app_context(), app.test_request_context():
+    with app.app_context():
         try:
             # init에서 실행할때 순환종속성 문제가 생기기때문에 함수가 필요할때 가져오기
             from nara.utils.utils import service_send_email
@@ -39,7 +39,7 @@ def send_bid_mailing(app, initUrlFor):
                                   FROM bid_notice b 
                                   LEFT JOIN bid_notice_area ba
                                   ON b.np_idx = ba.np_idx
-                                  WHERE b.created_date >= DATETIME('now', '-6 hour', 'localtime')''')
+                                  WHERE b.created_date >= DATETIME('now', '-2 hour', 'localtime')''')
 
             notice_list = notice.fetchall()
             print("notice_list", notice_list)
@@ -59,6 +59,7 @@ def send_bid_mailing(app, initUrlFor):
                                  FROM bms_industry i
                                  WHERE i.bms_idx = t.bms_idx
                                 )AS industry_cd_list
+                                
                          FROM bms_tbs t
                          ''')
             bms_data_list = c.fetchall()
