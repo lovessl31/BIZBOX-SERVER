@@ -138,9 +138,9 @@ class Bms(Resource):
                             bms_idx = result[1]
                             # 삽입할 데이터 리스트
                             indusInsert = insert_data(bms_idx, 'bms_industry', industry_list, key_name="industry_cd")
-                            areaInsert = insert_data(bms_idx, 'bms_area', area_list, key_name='bms_area')
-                            taskInsert = insert_data(bms_idx, 'bms_task', task_list, key_name='bms_taskCd')
-                            keyInsert = insert_data(bms_idx, 'bms_keyword', keyword_list, key_name="bms_keyword")
+                            areaInsert = insert_data(bms_idx, 'bms_area', area_list, key_name='area_cd')
+                            taskInsert = insert_data(bms_idx, 'bms_task', task_list, key_name='task_cd')
+                            keyInsert = insert_data(bms_idx, 'bms_keyword', keyword_list, key_name="keyword")
                             if False in [indusInsert, areaInsert, taskInsert, keyInsert]:
                                 return errorMessage(403, "중간 테이블 데이터 삽입이 잘못되었습니다.")
                             # 모두 삽입시 성공 메세지 출력
@@ -164,11 +164,34 @@ class Bms(Resource):
         else:
             return errorMessage(401, "토큰이 존재하지 않습니다. 다시 로그인하여 주세요.")
 
-    # @bid_api.doc(description="서비스 등록",
-    #               params={'email': '이용 이메일',
-    #                       'name': '이용자 명',
-    #                       'phone_number': '이용자 번호',
-    #                       'industry_code': "업종 번호",
-    #                       'area': '지역 그룹 번호',
-    #                       })
-    # def get(self):
+
+
+
+    @bid_api.doc(description="서비스 조회")
+    @jwt_required()
+    def get(self):
+        """
+                서비스 조회
+
+                GET 요청으로 사용자의 서비스를 조회합니다.
+                """
+        try:
+            conn = sqlite3.connect(MAIN_DB_PATH)
+            c = conn.cursor()
+            tInfo = get_jwt_identity()
+            mIdx = tInfo['idx']
+            mId = tInfo['id']
+            print(mIdx)
+            print(mId)
+            # 토큰의 유저 idx와 이름이 현재 유저 테이블에 존재하는지 확인.
+            c.execute('''SELECT count(*) FROM member WHERE mb_idx = ? AND mb_id = ?'''
+                      , (mIdx, mId))
+            check = c.fetchone()[0]
+            if check > 0:
+                cdt = "mb_idx = ?"
+                param = (mIdx,)
+                result = crudQuery('r', MAIN_DB_PATH, None, 'bms_tbs', cdt, None, param)
+                return result
+        except Exception as e:
+            return errorMessage(500, str(e))
+
