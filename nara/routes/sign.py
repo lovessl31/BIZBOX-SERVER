@@ -120,11 +120,11 @@ class login(Resource):
                         'loginMsg': "Y",
                         "accessToken": access_token,
                         "refreshToken": refresh_token,
-                        "status": "Y",
+                        "mail_auth": "Y",
                         'resultMsg': f'{mName}님 환영 합니다.'
                     }
                     if member[4] == 'N':
-                        result["status"] = 'N'
+                        result["mail_auth"] = 'N'
                     # JWT를 쿠키에 설정
                     set_access_cookies(successMessage(result), access_token)
                     return successMessage(result)
