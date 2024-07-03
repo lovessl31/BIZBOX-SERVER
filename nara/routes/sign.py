@@ -84,8 +84,6 @@ class login(Resource):
                 if member is None:
                     return errorMessage(401, '로그인에 실패하였습니다.')
                 # 이메일 가입상태가 N 일때
-                elif member[4] == 'N':
-                    return errorMessage(401, '인증되지 않은 계정입니다. 이메일 계정 인증이 필요합니다.')
                 # 해쉬된 비번 확인 후 로그인 성공한다면
                 if check_password_hash(member[2], mb_pw):
                     #  유저의 인덱스와 아이디 값 할당
@@ -122,8 +120,11 @@ class login(Resource):
                         'loginMsg': "Y",
                         "accessToken": access_token,
                         "refreshToken": refresh_token,
+                        "status": "Y",
                         'resultMsg': f'{mName}님 환영 합니다.'
                     }
+                    if member[4] == 'N':
+                        result["status"] = 'N'
                     # JWT를 쿠키에 설정
                     set_access_cookies(successMessage(result), access_token)
                     return successMessage(result)
