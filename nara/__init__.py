@@ -116,8 +116,8 @@ initUrlFor = url_for
 
 # APScheduler 설정
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger=CronTrigger(hour='0/2'))# 0시부터 24시까지
-
+# scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger=CronTrigger(hour='0/2'))# 0시부터 24시까지
+scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger='cron', minute='*/5')
 
 # def test_send_bid_mailing(app, initUrlFor):
 #     with app.app_context():
