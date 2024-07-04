@@ -185,10 +185,15 @@ class signup(Resource):
         print("data: ", data)
         if all(data[key] for key in required_fields):
             try:
-                is_valid_ep('email', data['email'])
-                is_valid_ep('password',  data['password'])
-                is_valid_ep('id', data['id'])
-                is_valid_ep('phone', data['phone_number'])
+                # 문자 템플릿 유효성
+                for v_type in required_fields:
+                    if v_type == 'name':
+                        continue
+                    elif v_type == 'phone_number':
+                        is_valid_ep('phone', data[v_type])
+                    else:
+                        is_valid_ep(v_type, data[v_type])
+
                 current_time = datetime.datetime.now()
                 data["created_date"] = current_time.strftime('%Y-%m-%d %H:%M:%S')
                 data["update_date"] = current_time.strftime('%Y-%m-%d %H:%M:%S')
