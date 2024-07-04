@@ -251,6 +251,8 @@ def crudQuery(queryType, path, data, table, condition=None, col=None, paramQuery
                     # 딕셔너리를 리스트에 추가
                     selectList.append(result_dict)
             conn.close()
+            if not selectList:
+                selectList = "데이터가 존재하지 않습니다."
             return successMessage(selectList)
         except Exception as e:
             return errorMessage(500, str(e))
