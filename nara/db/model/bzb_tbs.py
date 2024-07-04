@@ -20,41 +20,25 @@ def bzb_tbs(cursor):
                      (bms_idx INTEGER PRIMARY KEY,           -- 서비스 번호
                       mb_idx INTEGER NOT NULL UNIQUE,        -- 계정 번호    
                       bms_email VARCHAR NOT NULL UNIQUE,     -- 이용자 이메일                      
-                      bms_name VARCHAR NOT NULL,             -- 이용자 이름                      
+                      bms_name VARCHAR NOT NULL,             -- 이용자 이름      
+                      bms_industry VARCHAR NOT NULL,         -- 업종 코드                        
+                      bms_area VARCHAR NOT NULL,             -- 제한 지역
+                      bms_task VARCHAR NOT NULL,             -- 업무 코드                
                       phone_number TEXT(11) NOT NULL UNIQUE, -- 이용자 번호                                                             
                       created_date DATETIME NOT NULL,        -- 신청 일자
                       FOREIGN KEY (mb_idx) REFERENCES member(mb_idx) ON DELETE CASCADE                      
                       )                      
     ''')
 
-    # 입찰 메일링 서비스 중간 테이블
-    cursor.execute('''CREATE TABLE IF NOT EXISTS bms_industry
-                     (  bms_idx INTEGER,                 -- 서비스 번호
-                        industry_cd VARCHAR(2) NOT NULL, -- 업종 코드
-                        FOREIGN KEY (bms_idx) REFERENCES bms_tbs(bms_idx) ON DELETE CASCADE                      
-                      )                      
-    ''')
-    # 입찰 메일링 서비스 중간 테이블
-    cursor.execute('''CREATE TABLE IF NOT EXISTS bms_area
-                         (  bms_idx INTEGER,                 -- 서비스 번호
-                            bms_area VARCHAR(2) NOT NULL,    -- 지역 코드                      
-                            FOREIGN KEY (bms_idx) REFERENCES bms_tbs(bms_idx) ON DELETE CASCADE                      
-                          )                      
-        ''')
-    # 입찰 메일링 서비스 중간 테이블
-    cursor.execute('''CREATE TABLE IF NOT EXISTS bms_task
-                         (  bms_idx INTEGER,                 -- 서비스 번호
-                            bms_taskCd VARCHAR NOT NULL,  -- 업무 코드
-                            FOREIGN KEY (bms_idx) REFERENCES bms_tbs(bms_idx) ON DELETE CASCADE                      
-                          )                      
-        ''')
+    
     cursor.execute('''CREATE TABLE IF NOT EXISTS bms_keyword
-                             (  bms_idx INTEGER,                 -- 서비스 번호
-                                bms_keyword VARCHAR NOT NULL,   -- 키워드 
+                             (  bk_idx INTEGER PRIMARY KEY,         -- 인덱싱 번호
+                                bms_idx INTEGER,                 -- 서비스 번호
+                                keyword VARCHAR NOT NULL,        -- 키워드 
                                 FOREIGN KEY (bms_idx) REFERENCES bms_tbs(bms_idx) ON DELETE CASCADE                      
                               )                      
             ''')
-
+    
 
     # 입찰 공고 테이블
     # np_number 에 unique 걸어놓으면 다른 업종코드에 같은 공고번호에서 값을 넣을수없음.
