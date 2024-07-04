@@ -27,39 +27,32 @@ def send_bid_mailing(app, initUrlFor):
             template = env.get_template('biz_mail_list.html')
 
 
-            # notice = c.execute('''SELECT * FROM bid_notice WHERE created_date >= DATE('now', '-2 hour')''')
-            notice = c.execute('''SELECT b.np_idx,
-                                         b.industry_cd,
-                                         b.taskClCds,
-                                         b.np_title,                                     
-                                         b.demand_agency,
-                                         b.tender_open_date,
-                                         b.tender_close_date,
-                                         ba.area_g_cd
-                                  FROM bid_notice b 
-                                  LEFT JOIN bid_notice_area ba
-                                  ON b.np_idx = ba.np_idx
-                                  WHERE b.created_date >= DATETIME('now', '-2 hour', 'localtime')''')
-
-            notice_list = notice.fetchall()
-            print("notice_list", notice_list)
-            if not notice_list:
-                print("No notices found")
-                return
 
             # 서브 쿼리를 사용하지않고 조인을 사용하면 업종코드 별로 데이터가 생성되기에 notice_list 를 여러번 도는 비효율적인 로직임으로 서브쿼리를 사용해
             # 유저가 속한 업종코드들을 하나의 컬럼으로 묶어서 가져와 해당하는 업종공고로 메일로 보내줄수 있어 최대 3배의 효율을 낼수 있음
             
             c.execute('''SELECT t.bms_name,
-                                t.bms_email, 
-                                t.bms_area,     
-                                t.bms_taskCd,
+                                t.bms_email,                                 
+                                (
+                                 SELECT GROUP_CONCAT(ba.area_cd, ', ')
+                                 FROM bms_area ba
+                                 WHERE ba.bms_idx = t.bms_idx
+                                )AS area_cd_list,
+                                (
+                                 SELECT GROUP_CONCAT(bt.task_cd, ', ')
+                                 FROM bms_task bt
+                                 WHERE bt.bms_idx = t.bms_idx
+                                )AS task_cd_list,
+                                (
+                                 SELECT GROUP_CONCAT(bk.keyword, ', ')
+                                 FROM bms_keyword bk
+                                 WHERE bk.bms_idx = t.bms_idx
+                                )AS keyword_cd_list,
                                 (
                                  SELECT GROUP_CONCAT(i.industry_cd, ', ')
                                  FROM bms_industry i
                                  WHERE i.bms_idx = t.bms_idx
-                                )AS industry_cd_list
-                                
+                                )AS industry_cd_list                                
                          FROM bms_tbs t
                          ''')
             bms_data_list = c.fetchall()
@@ -72,6 +65,35 @@ def send_bid_mailing(app, initUrlFor):
             for bms in bms_data_list:
                 temp_data_list = []
                 print('bms: ', bms)
+                # 유저 서비스 테이블 값
+                user_industry_cd = bms[5]
+                user_keywords = bms[4]
+                user_task_cd = bms[3]
+                user_area_cd = bms[2]
+                user_service_name = bms[0]
+
+
+                # 입찰 공고 조회
+
+                '''
+                7.02. 키워드를 가지고 조회하는 쿼리 생성해야함
+                
+                '''
+                notice = c.execute('''SELECT b.np_idx,
+                                             b.industry_cd,
+                                             b.taskClCds,
+                                             b.np_title,                                     
+                                             b.demand_agency,
+                                             b.tender_open_date,
+                                             b.tender_close_date,
+                                             ba.area_g_cd
+                                      FROM bid_notice b 
+                                      LEFT JOIN bid_notice_area ba
+                                      ON b.np_idx = ba.np_idx
+                                     WHERE b.created_date >= DATETIME('now', '-10 hour', 'localtime')''')
+
+                notice_list = notice.fetchall()
+
                 for notice in notice_list:
                     # 업무 명 업무 코드로 전환
                     task_map = {
@@ -92,12 +114,6 @@ def send_bid_mailing(app, initUrlFor):
                     # print(type(task_Cd))
                     # print("task_Cd", task_Cd)
 
-
-                    # 유저 서비스 테이블 값
-                    user_industry_cd = bms[4]
-                    user_task_cd = bms[3]
-                    user_area_cd = bms[2]
-                    user_service_name = bms[0]
                     # html 문서에 들어갈 템플릿 정의
                     template_data = {
                         'bid_id': notice_idx,
@@ -114,7 +130,7 @@ def send_bid_mailing(app, initUrlFor):
                             temp_data_list.append(template_data)
                     # 특정 업무
                     else:
-                        if indusCd in user_industry_cd and user_area_cd == area_g_cd and user_task_cd == task_Cd:
+                        if indusCd in user_industry_cd and area_g_cd in user_area_cd and task_Cd in user_task_cd:
                             temp_data_list.append(template_data)
 
                 if temp_data_list:
