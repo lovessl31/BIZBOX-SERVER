@@ -32,6 +32,18 @@ def insert_data(idx, table_name, data_list, key_name):
             return False
     return True
 
+def update_data(idx, table_name, data_list, key_name, cdt, param):
+    """
+    :type data_list: list
+    """
+    middle_data = {"bms_idx": idx}
+    for data_item in data_list:
+        middle_data[f"{key_name}"] = data_item
+        edt_check = crudQuery('u', MAIN_DB_PATH, middle_data, table_name, cdt, None, param)
+        if not isinstance(edt_check, list):
+            return False
+    return True
+
 @bid_api.route('/get-bms')
 class Bms(Resource):
     @bid_api.doc(description="서비스 등록",
@@ -59,7 +71,7 @@ class Bms(Resource):
         print(data)
         if 'idx' in tInfo and 'id' in tInfo:
             print(tInfo['idx'], tInfo['id'])
-            if all(data[key] for key in required_fields):
+            if all(data[key] for key in required_fields if key != 'keyword') and 'keyword' in data:
                 # 업종 코드 양식 검증
                 try:
                     conn = sqlite3.connect(MAIN_DB_PATH)
@@ -92,28 +104,19 @@ class Bms(Resource):
                         return errorMessage(403, f"존재하지 않는 업종 코드가 포함되어 있습니다 : {non_existing_codes}")
 
                     # 중간 테이블에 삽입할 각각의 리스트 가져오기
-                    area_list = data['area'].split(',')
-                    task_list = data['task'].split(',')
                     keyword_list = data['keyword'].split(',')
-                    print(f'''
-                    {industry_codes},
-                    {industry_list},
-                    {area_list},
-                    {task_list},
-                    {keyword_list},
-                    ''')
                     # 변경할 키
                     key_mapping = {
                         'email': 'bms_email',
-                        'name': 'bms_name'
+                        'name': 'bms_name',
+                        'industry_code': 'bms_industry',
+                        'task': 'bms_task',
+                        'area': 'bms_area'
                     }
                     # 키를 변경한 튜플 리스트
                     select_key_data = {key_mapping.get(k, k): v for k, v in data.items()}
 
                     # 안쓰는 키 삭제
-                    del select_key_data['industry_code']
-                    del select_key_data['task']
-                    del select_key_data['area']
                     del select_key_data['keyword']
 
                     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -136,12 +139,14 @@ class Bms(Resource):
                         # 중간 테이블 데이터 삽입
                         if isinstance(result, list):
                             bms_idx = result[1]
-                            # 삽입할 데이터 리스트
-                            indusInsert = insert_data(bms_idx, 'bms_industry', industry_list, key_name="industry_cd")
-                            areaInsert = insert_data(bms_idx, 'bms_area', area_list, key_name='area_cd')
-                            taskInsert = insert_data(bms_idx, 'bms_task', task_list, key_name='task_cd')
-                            keyInsert = insert_data(bms_idx, 'bms_keyword', keyword_list, key_name="keyword")
-                            if False in [indusInsert, areaInsert, taskInsert, keyInsert]:
+
+                            # 만약 키워드가 존재하지않으면 굳이 DB에 넣을 필요없으니 상태값을 할당
+                            if not keyword_list:
+                                keyInsert = True
+                            # 키워드가 존재할때만 DB에 insert
+                            else:
+                                keyInsert = insert_data(bms_idx, 'bms_keyword', keyword_list, key_name="keyword")
+                            if keyInsert is False:
                                 return errorMessage(403, "중간 테이블 데이터 삽입이 잘못되었습니다.")
                             # 모두 삽입시 성공 메세지 출력
                             return successMessage()
@@ -183,6 +188,164 @@ class Bms(Resource):
             mId = tInfo['id']
             print(mIdx)
             print(mId)
+            c.execute('''SELECT bt.bms_idx
+                                               FROM member m
+                                               LEFT JOIN bms_tbs bt
+                                               ON m.mb_idx = bt.mb_idx
+                                               WHERE bt.mb_idx = ?
+                                               AND m.mb_id = ?'''
+                      , (mIdx, mId))
+            b = c.fetchone()
+            print(b)
+            if b is None:
+                return errorMessage(404, '유저 정보가 없습니다.')
+            bidx = b[0]
+            if int(bidx) > 0:
+                param = (mIdx,)
+                c.execute('''select t.bms_idx,
+                                    t.bms_email,
+                                    t.bms_name,
+                                    t.phone_number,
+                                    t.bms_area,
+                                    t.bms_task,
+                                    t.bms_industry
+                             from bms_tbs t
+                             WHERE t.mb_idx = ?                
+                ''', param)
+                bms = c.fetchone()
+                c.execute('''SELECT  keyword   
+                                   FROM bms_keyword
+                                   WHERE bms_idx = ?               
+                                ''', (bidx, ))
+                keyword_data = c.fetchall()
+                if keyword_data:
+                    keywords = [{'keyword': keyword[0]} for keyword in keyword_data]
+
+                    bms_info = {
+                        "idx": bms[0],
+                        "email": bms[1],
+                        "name": bms[2],
+                        "phone_number": bms[3],
+                        "area": bms[4],
+                        "task": bms[5],
+                        "industry": bms[6],
+                        'x_keyword': keywords
+                    }
+                else:
+                    bms_info = {
+                        "idx": bms[0],
+                        "email": bms[1],
+                        "name": bms[2],
+                        "phone_number": bms[3],
+                        "area": bms[4],
+                        "task": bms[5],
+                        "industry": bms[6],
+                        "x_keyword": ""
+                    }
+                return successMessage(bms_info)
+            else:
+                return errorMessage(404, '유저 정보가 존재하지않습니다.')
+        except Exception as e:
+            DetailErrMessageTraceBack(e)
+            return errorMessage(500, str(e))
+
+    @bid_api.doc(description="서비스 수정",
+                 params={'idx': '인덱스',
+                         'email': '이용 이메일',
+                         'name': '이용자 명',
+                         'phone_number': '이용자 번호',
+                         'industry_code': "업종 번호",
+                         'area': '지역 그룹 번호',
+                         'task': '업무 명',
+                         'keyword': '키워드'
+                         }
+                 )
+    @jwt_required()
+    def put(self):
+        """
+                서비스 수정
+
+                PUT 요청으로 사용자의 서비스를 수정합니다.
+                """
+        data = json.loads(json.dumps(request.form, ensure_ascii=False))
+        tInfo = get_jwt_identity()
+        print("서비스 수정 data : ", data)
+        if data is not None:
+            try:
+                for v_type in data:
+                    if v_type in ['name', 'bms_idx', 'keyword']:
+                        continue
+                    elif v_type == 'industry_code':
+                        is_valid_ep('industry', data[v_type])
+                    else:
+                        is_valid_ep(v_type, data[v_type])
+                conn = sqlite3.connect(MAIN_DB_PATH)
+                c = conn.cursor()
+
+                mIdx = tInfo['idx']
+                bidx = data['idx']
+                if bidx is None:
+                    return errorMessage(400, '필수 매개 변수 (idx) 가 존재하지않습니다.')
+
+                # 토큰의 유저 idx와 이름으로 멤버 테이블과 서비스 테이블 확인.
+                c.execute('''SELECT count(*)
+                                   FROM bms_tbs                                                                      
+                                   WHERE mb_idx = ?
+                                   AND bms_idx = ?'''
+                          , (mIdx, bidx))
+                check = c.fetchone()[0]
+                if check > 0:
+                    key_mapping = {
+                        'email': 'bms_email',
+                        'name': 'bms_name',
+                        'industry_code': 'bms_industry',
+                        'area': 'bms_area',
+                        'task': 'bms_task'
+                    }
+                    # 키를 변경한 튜플 리스트
+                    select_key_data = {key_mapping.get(k, k): v for k, v in data.items()}
+                    del select_key_data['idx']
+                    # 공통 업데이트 함수 호출
+                    for key, value in select_key_data.items():
+                        if key in ['bms_email', 'bms_name', 'phone_number', 'bms_industry', 'bms_area', 'bms_task']:
+                            result = {key: value}
+                            udt = crudQuery('u', MAIN_DB_PATH, result, 'bms_tbs', "bms_idx = ?", None, (bidx,))
+                            if udt.status_code >= 400:
+                                return errorMessage(403, '업데이트 중 에러가 발생하였습니다. (service)')
+                        else:
+                            keyword_list = value.split(',')
+                            print("keyword_list", keyword_list)
+                            crudQuery('d', MAIN_DB_PATH, None, 'bms_keyword', "bms_idx = ?", None, (bidx,))
+                            for keyword in keyword_list:
+                                print("keyword", keyword)
+                                result = {'keyword': keyword,
+                                          'bms_idx': bidx}
+                                udt = crudQuery('c', MAIN_DB_PATH, result, 'bms_keyword')
+                                if udt[0].status_code >= 400:
+                                    print('키워드 에러 발생', udt[0].status_code)
+                                    return errorMessage(403, '업데이트 중 에러가 발생하였습니다. (keyword)')
+                    return successMessage("데이터를 성공적으로 수정하였습니다.")
+            except Exception as e:
+                return errorMessage(500, str(e))
+        else:
+            errorMessage(400, "수정 할 파라미터가 존재하지 않습니다.")
+
+    @bid_api.doc(description="서비스 해지")
+    @jwt_required()
+    def delete(self):
+        """
+                서비스 해지
+
+                delete 요청으로 사용자의 서비스를 해지 합니다.
+                """
+        try:
+            conn = sqlite3.connect(MAIN_DB_PATH)
+            c = conn.cursor()
+            tInfo = get_jwt_identity()
+            mIdx = tInfo['idx']
+            mId = tInfo['id']
+            print(mIdx)
+            print(mId)
             # 토큰의 유저 idx와 이름이 현재 유저 테이블에 존재하는지 확인.
             c.execute('''SELECT count(*) FROM member WHERE mb_idx = ? AND mb_id = ?'''
                       , (mIdx, mId))
@@ -190,7 +353,7 @@ class Bms(Resource):
             if check > 0:
                 cdt = "mb_idx = ?"
                 param = (mIdx,)
-                result = crudQuery('r', MAIN_DB_PATH, None, 'bms_tbs', cdt, None, param)
+                result = crudQuery('d', MAIN_DB_PATH, None, 'bms_tbs', cdt, None, param)
                 return result
         except Exception as e:
             return errorMessage(500, str(e))
