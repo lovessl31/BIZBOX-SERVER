@@ -11,7 +11,7 @@
         <div style="margin:0 0px">
             <!-- header -->
             <p style="margin:0; padding:20px 0 10px; font-size:0; line-height:0; border-bottom:3px solid #242424;">
-                <img src="{{ url_for('http://192.168.0.18:3001/static/img/logo.png') }}" alt="비즈박스로고" style="width: 132px; height: auto;">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="비즈박스로고" style="width: 132px; height: auto;">
             </p>
             <!-- content -->
             <div style="margin-top:20px; padding:40px 20px; background:#e6e8fd; text-align: center;">
@@ -38,7 +38,9 @@
                     <div style="display: table-row-group;">
                         {% for bid in bids %}
                         <div style="display: table-row; cursor: pointer; word-break: break-word; white-space: normal;">
-                            <a href="{{ url_for('detail', bid_id=bid.bid_id, _external=True) }}" style="display: table-cell; padding: 8px; text-decoration: none;">
+                            <a href="{{ url_for('detail', bid_id=bid.bid_id, _external=True) }}"
+                               style="display: table-cell; padding: 8px; text-decoration: none;
+                                        a:link{color:red;text-decoration:none;}a:visited{color:black;text-decoration:none;}a:hover{color:blue;text-decoration:underline;}">
                                 <div style="display: table-cell; padding: 8px;">{{ bid.industry_cd }}</div>
                                 <div style="display: table-cell; padding: 8px;">{{ bid.bid_name }}</div>
                                 <div style="display: table-cell; padding: 8px;">{{ bid.bid_agency }}</div>
