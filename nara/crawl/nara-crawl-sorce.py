@@ -294,24 +294,26 @@ def extract_details(sb_soup):
         ep = calculate_ep(ea, vat)
         details['추정가격'] = ep
 
+
+
     if '부가가치세포함여부' in details:
         print("부가가치세포함여부", details.get('부가가치세포함여부'))
         vatyn = details.get('부가가치세포함여부')[:6]
         print("vatyn: ", vatyn)
-        if vatyn == '부가세 포함':
+        if vatyn.strip() == '부가세 포함':
             # 사업 금액이 추정가격 계산에 더 정확함
-            if details['사업금액(추정가격 + 부가세)'] is not None:
-                details['추정가격'] = details.get('사업금액(추정가격 + 부가세)', '')
+            amount = details.get('사업금액(추정가격 + 부가세)', None)
+            if amount is not None:
+                details['추정가격'] = amount
             else:
                 details['추정가격'] = details.get('배정예산', '')
         else:
-            if details['사업금액(추정가격 + 부가세)'] is not None:
-                emptyPrice = calculate_empty_vat(details.get('사업금액(추정가격 + 부가세)', ''))
+            amount = details.get('사업금액(추정가격 + 부가세)', None)
+            if amount is not None:
+                emptyPrice = calculate_empty_vat(amount)
             else:
                 emptyPrice = calculate_empty_vat(details.get('배정예산', ''))
             details['추정가격'] = emptyPrice
-
-
     return details
 
 
@@ -573,16 +575,12 @@ if __name__ == "__main__":
     # 데이터를 중복 없이 결합하기 위한 세트 초기화
     unique_data = set()
     industry_list = c.fetchall()
-    print(industry_list)
     # 각 줄의 데이터를 세트에 추가
     for idt in industry_list:
-        print("idt : ", idt)
         items = idt[0].split(',')
         unique_data.update(items)
     unique_data_list = sorted(unique_data, key=int)
-    print(unique_data_list)
     identifiers = unique_data_list  # 작업할 identifier 목록
-    print(identifiers)
     for identifier in identifiers:
         try:
             print("identifier :", identifier)
