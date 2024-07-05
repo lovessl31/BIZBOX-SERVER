@@ -213,7 +213,7 @@ class signup(Resource):
                 new_data['status'] = 'N'
                 print("new_data", new_data)
                 result = crudQuery('c', MAIN_DB_PATH, new_data, 'member')
-                print(result[1])
+                user_idx = result[1]
                 if isinstance(result, list):
                     # 이메일 인증 토큰 생성
                     mb_email = new_data['mb_email']
@@ -225,7 +225,7 @@ class signup(Resource):
                     print("link", link)
                     email_body = f'인증 링크: {link}'
 
-                    send_email(new_data['mb_email'], '회원가입 이메일 인증', email_body, 'Auth')
+                    send_email(new_data['mb_email'], '회원가입 이메일 인증', email_body, 'Auth', user_idx)
                     print("이메일 발송 성공")
                     return result[0]
                 else:
