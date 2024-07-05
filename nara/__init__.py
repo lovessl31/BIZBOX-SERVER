@@ -49,7 +49,7 @@ def detail(bid_id):
                  LEFT JOIN bid_notice_area ba
                  ON b.np_idx = ba.np_idx
                  WHERE b.np_idx = ?
-                 AND b.created_date >= DATETIME('now', '-4 hour', 'localtime')''', (bid_id,))
+                 AND b.created_date >= DATETIME('now', '-6 hour', 'localtime')''', (bid_id,))
     bid = c.fetchone()
 
     if not bid:
@@ -95,7 +95,6 @@ refresh_exp = timedelta(days=3)
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = access_exp
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = refresh_exp
 
-print(app.config)
 
 
 from nara.routes.sign import sign_api
@@ -117,11 +116,7 @@ initUrlFor = url_for
 # APScheduler 설정
 scheduler = BackgroundScheduler()
 # scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger=CronTrigger(hour='0/2'))# 0시부터 24시까지
-scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger='cron', minute='*/5')
-
-# def test_send_bid_mailing(app, initUrlFor):
-#     with app.app_context():
-#         send_bid_mailing(app, initUrlFor)
+scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger='cron', minute='*/1') # 테스트용
 
 
 # 스케줄러 시작
@@ -132,12 +127,6 @@ try:
 except (KeyboardInterrupt, SystemExit):
     scheduler.shutdown()
 
-'''
-
-스케줄러 2번 실행되는 문제 해결.
-https://jakpentest.tistory.com/entry/Flask-Scheduling%EC%9D%B4-2%EB%B2%88-%EC%8B%A4%ED%96%89%EB%90%98%EB%8A%94-%ED%98%84%EC%83%81%EC%97%90-%EB%8C%80%ED%95%B4
-
-'''
 
 
 
