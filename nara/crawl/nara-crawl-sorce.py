@@ -301,14 +301,14 @@ def extract_details(sb_soup):
         if vatyn == '부가세 포함':
             # 사업 금액이 추정가격 계산에 더 정확함
             if details['사업금액(추정가격 + 부가세)'] is not None:
-                details['추정가격'] = details['사업금액(추정가격 + 부가세)']
+                details['추정가격'] = details.get('사업금액(추정가격 + 부가세)', '')
             else:
-                details['추정가격'] = details['배정예산']
+                details['추정가격'] = details.get('배정예산', '')
         else:
             if details['사업금액(추정가격 + 부가세)'] is not None:
-                emptyPrice = calculate_empty_vat(details['사업금액(추정가격 + 부가세)'])
+                emptyPrice = calculate_empty_vat(details.get('사업금액(추정가격 + 부가세)', ''))
             else:
-                emptyPrice = calculate_empty_vat(details['배정예산'])
+                emptyPrice = calculate_empty_vat(details.get('배정예산', ''))
             details['추정가격'] = emptyPrice
 
 
@@ -568,9 +568,20 @@ def main(industry_cd):
 if __name__ == "__main__":
     conn = sqlite3.connect(MAIN_DB_PATH)
     c = conn.cursor()
-    c.execute('''SELECT DISTINCT industry_cd AS '업종코드' FROM bms_industry''')
-    before_data = [int(item[0]) for item in c.fetchall()]
-    identifiers = before_data  # 작업할 identifier 목록
+    c.execute('''SELECT bms_industry AS '업종코드' FROM bms_tbs''')
+
+    # 데이터를 중복 없이 결합하기 위한 세트 초기화
+    unique_data = set()
+    industry_list = c.fetchall()
+    print(industry_list)
+    # 각 줄의 데이터를 세트에 추가
+    for idt in industry_list:
+        print("idt : ", idt)
+        items = idt[0].split(',')
+        unique_data.update(items)
+    unique_data_list = sorted(unique_data, key=int)
+    print(unique_data_list)
+    identifiers = unique_data_list  # 작업할 identifier 목록
     print(identifiers)
     for identifier in identifiers:
         try:
