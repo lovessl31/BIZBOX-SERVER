@@ -17,7 +17,7 @@ import random
 import string
 
 # DB 접속 경로
-MAIN_DB_PATH = r"/nara/db/bizbox.db"
+MAIN_DB_PATH =  r"C:\work\NARA_CRAWL\nara\db\bizbox.db"
 
 
 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -562,7 +562,7 @@ def convert_ascii_email(email):
 
 import json
 
-def service_send_email(receiver_email, subject, body, mail_type, html_content):
+def service_send_email(receiver_email, subject, body, mail_type, html_content, mb_idx):
     # 이메일 설정
     smtp_server = 'smtp.worksmobile.com'
     smtp_port = 587
@@ -608,19 +608,19 @@ def service_send_email(receiver_email, subject, body, mail_type, html_content):
             smtp.ehlo()
             smtp.esmtp_features['SMTPUTF8'] = ''
             smtp.sendmail(email_user, receiver_email, message.as_string())
-            save_to_database(email_user, receiver_email, subject, body, mail_type, 'Y')
+            save_to_database(email_user, receiver_email, subject, body, mail_type, 'Y', mb_idx)
     except Exception as e:
         print(f"메일 발송 실패: {e}")
         err_body = (f"이메일 발송 에러 : {e}"
                     f"body : {body}")
         err_subject = f"Err:{subject}"
-        save_to_database(email_user, receiver_email, err_subject, err_body, mail_type, 'N')
+        save_to_database(email_user, receiver_email, err_subject, err_body, mail_type, 'N', mb_idx)
 
 
 
 
 
-def send_email(receiver_email, subject, body, mail_type):
+def send_email(receiver_email, subject, body, mail_type, mb_idx):
     # 이메일 설정
     smtp_server = 'smtp.worksmobile.com'
     smtp_port = 587
@@ -657,16 +657,16 @@ def send_email(receiver_email, subject, body, mail_type):
             # smtp.sendmail(message['From'], message['To'], message.as_string())
             smtp.quit()
 
-            save_to_database(email_user, receiver_email, subject, body, mail_type, 'Y')
+            save_to_database(email_user, receiver_email, subject, body, mail_type, 'Y', mb_idx)
     except Exception as e:
         print(f"메일 발송 실패: {e}")
         err_body = (f"이메일 발송 에러 : {e}"
                     f"body : {body}")
         err_subject = f"Err:{subject}"
-        save_to_database(email_user, receiver_email, err_subject, err_body, mail_type, 'N')
+        save_to_database(email_user, receiver_email, err_subject, err_body, mail_type, 'N', mb_idx)
 
 
-def save_to_database(From, to, subject, body, mail_type, status):
+def save_to_database(From, to, subject, body, mail_type, status, mb_idx):
     try:
         print("body", body)
         print("bodytype : ", type(body))
@@ -676,9 +676,9 @@ def save_to_database(From, to, subject, body, mail_type, status):
         conn = sqlite3.connect(MAIN_DB_PATH)
         cursor = conn.cursor()
         # 데이터 베이스에 삽입
-        cursor.execute('''INSERT INTO mail_log (sender, recipient, subject, body, status, type, sent_time)
+        cursor.execute('''INSERT INTO mail_log (sender, recipient, subject, body, status, type, sent_time, mb_idx)
                           VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                       (From, to, subject, body, status, mail_type, current_time))
+                       (From, to, subject, body, status, mail_type, current_time, mb_idx))
         conn.commit()
         conn.close()
         print("데이터베이스에 기록 완료")
