@@ -639,15 +639,19 @@ def send_email(receiver_email, subject, body, mail_type, mb_idx):
 
     # print("mail 함수 :", body)
     # HTML 템플릿 로드
-    template_file = r'C:\work\NARA_CRAWL\templates\auth_mail_page.html'
-    with open(template_file, 'r', encoding='utf-8') as file:
-        template_content = file.read()
+    if mail_type in ['Auth', 'resend_auth']:
+        template_file = r'C:\work\NARA_CRAWL\templates\auth_mail_page.html'
+        with open(template_file, 'r', encoding='utf-8') as file:
+            template_content = file.read()
 
-    body = render_template_string(template_content, link=body)
+        body = render_template_string(template_content, link=body)
 
-    html_part = MIMEText(body, 'html')
-    message.attach(html_part)
-
+        html_part = MIMEText(body, 'html')
+        message.attach(html_part)
+    else:
+        # 평범한 텍스트 메일 작성
+        text_part = MIMEText(body, 'plain')
+        message.attach(text_part)
     try:
         # SMTP 서버에 연결
         # SMTP 서버에 연결
