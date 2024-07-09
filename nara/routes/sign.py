@@ -9,7 +9,7 @@ from nara import app, jwt_blocklist
 from flask_jwt_extended import (create_access_token, jwt_required, create_refresh_token, get_jwt,
                                 decode_token, get_jwt_identity, set_access_cookies)
 
-from flask import request, url_for
+from flask import request, url_for, render_template, Response
 import json
 from dotenv import load_dotenv
 
@@ -19,8 +19,6 @@ from nara.utils.utils import successMessage, errorMessage, crudQuery, send_email
 from nara.utils.valid import is_valid_ep
 from nara.utils.err_handler import CustomValidException, DetailErrMessageTraceBack
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
-
-
 
 
 
@@ -223,9 +221,9 @@ class signup(Resource):
                     # 인증 이메일 전송
                     link = url_for('sign_verify_email', token=token, _external=True)
                     print("link", link)
-                    email_body = f'인증 링크: {link}'
 
-                    send_email(new_data['mb_email'], '회원가입 이메일 인증', email_body, 'Auth', user_idx)
+                    send_email(new_data['mb_email'], '회원가입 이메일 인증', link, 'Auth', user_idx)
+
                     print("이메일 발송 성공")
                     return result[0]
                 else:
@@ -239,6 +237,36 @@ class signup(Resource):
             except Exception as e:
                 return errorMessage(500, str(e))
 
+
+@sign_api.route('/resend-verify')
+class ResendVerify(Resource):
+    @sign_api.doc(description="인증 재발급 요청")
+    @jwt_required()
+    def get(self):
+        tInfo = get_jwt_identity()
+        if 'idx' in tInfo and 'id' in tInfo:
+            try:
+                member_idx = tInfo['idx']
+                member_id = tInfo['id']
+
+                conn = sqlite3.connect(MAIN_DB_PATH)
+                c = conn.cursor()
+
+                c.execute('''SELECT mb_email FROM member WHERE mb_idx = ? AND mb_id = ?''', (member_idx, member_id))
+                user_email = c.fetchone()[0]
+                print("user_email", user_email)
+                if not user_email:
+                    return errorMessage(400, '해당하는 유저가 존재하지않습니다.')
+                # 토큰 생성
+                token = serializer.dumps({'mb_email': user_email, 'mb_id': member_id}, salt='email-confirm')
+                link = url_for('sign_verify_email', token=token, _external=True)
+                # 인증 이메일 재전송
+                send_email(user_email, '회원가입 이메일 재인증', link, 'resend_auth', member_idx)
+                return successMessage('인증 메일을 재발송 하였습니다.')
+            except Exception as e:
+                return errorMessage(500, str(e))
+        else:
+            return errorMessage(403, '토큰 정보가 존재하지않습니다.')
 
 @sign_api.route('/verify/<string:token>')
 class VerifyEmail(Resource):
@@ -256,13 +284,10 @@ class VerifyEmail(Resource):
             delCondition = 'mb_email = ? AND status = ?'
             delParam = (mb_email, 'N')
             crudQuery('d', MAIN_DB_PATH, None, 'member', delCondition, None, delParam)
-
-            if isinstance(get_db_data, dict):
-                return successMessage(f"이메일이 성공적으로 인증되었습니다. Token: {token}")
-            else:
-                return get_db_data
+            if get_db_data.status_code == 200:
+                return Response(render_template('auth_mail_detail.html'), mimetype='text/html')
         except SignatureExpired:
-            return errorMessage(400, "The token is expired")
+            return Response(render_template('auth_mail_exp.html'), mimetype='text/html')
         except BadSignature:
             return errorMessage(400, "Invalid token")
 
