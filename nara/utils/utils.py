@@ -618,7 +618,7 @@ def service_send_email(receiver_email, subject, body, mail_type, html_content, m
 
 
 
-
+from flask import render_template_string
 
 def send_email(receiver_email, subject, body, mail_type, mb_idx):
     # 이메일 설정
@@ -630,7 +630,26 @@ def send_email(receiver_email, subject, body, mail_type, mb_idx):
     # SSLContext 생성
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # TLSv1.2 이상 사용
+
+    # 이메일 내용 작성
+    message = MIMEMultipart('alternative')
+    message["From"] = email_user
+    message["To"] = receiver_email
+    message["Subject"] = f"[BIZBOX] {subject}"
+
+    # print("mail 함수 :", body)
+    # HTML 템플릿 로드
+    template_file = r'C:\work\NARA_CRAWL\templates\auth_mail_page.html'
+    with open(template_file, 'r', encoding='utf-8') as file:
+        template_content = file.read()
+
+    body = render_template_string(template_content, link=body)
+
+    html_part = MIMEText(body, 'html')
+    message.attach(html_part)
+
     try:
+        # SMTP 서버에 연결
         # SMTP 서버에 연결
         with smtplib.SMTP(smtp_server, smtp_port) as smtp:
             # STARTTLS 보안 연결 시작
@@ -640,23 +659,7 @@ def send_email(receiver_email, subject, body, mail_type, mb_idx):
             # SMTPUTF8 활성화
             smtp.ehlo()
             smtp.esmtp_features['SMTPUTF8'] = ''
-
-            # 이메일 내용 작성
-            subject = subject
-            body = body
-            message = EmailMessage()
-            # message = MIMEMultipart()
-            message["From"] = f"비즈박스 <{email_user}>"
-            message["To"] = receiver_email
-            message["Subject"] = f"[BIZBOX] {subject}"
-
-            # mime 형태의 메세지 작성
-            message.set_content(body)
-            # message.attach(MIMEText(body, 'plain'))
-            smtp.send_message(message)
-            # smtp.sendmail(message['From'], message['To'], message.as_string())
-            smtp.quit()
-
+            smtp.sendmail(email_user, receiver_email, message.as_string())
             save_to_database(email_user, receiver_email, subject, body, mail_type, 'Y', mb_idx)
     except Exception as e:
         print(f"메일 발송 실패: {e}")
@@ -668,16 +671,12 @@ def send_email(receiver_email, subject, body, mail_type, mb_idx):
 
 def save_to_database(From, to, subject, body, mail_type, status, mb_idx):
     try:
-        print("body", body)
-        print("bodytype : ", type(body))
-        print(From, to, subject, mail_type, status)
-
         # 데이터 베이스 연결
         conn = sqlite3.connect(MAIN_DB_PATH)
         cursor = conn.cursor()
         # 데이터 베이스에 삽입
         cursor.execute('''INSERT INTO mail_log (sender, recipient, subject, body, status, type, sent_time, mb_idx)
-                          VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
                        (From, to, subject, body, status, mail_type, current_time, mb_idx))
         conn.commit()
         conn.close()
