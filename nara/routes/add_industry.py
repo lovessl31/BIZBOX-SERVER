@@ -77,6 +77,11 @@ class Bms(Resource):
                     conn = sqlite3.connect(MAIN_DB_PATH)
                     c = conn.cursor()
 
+                    member_check = c.execute('''select count(*) from member where mb_id = ? and mb_idx = ? 
+                                    and status = 'y' ''', (tInfo['idx'], tInfo['id']))
+                    if member_check.fetchone()[0] < 1:
+                        return errorMessage(403, '인증되지 않은 사용자입니다.')
+
                     # 문자 템플릿 유효성
                     for v_type in required_fields:
                         if v_type == 'name':
@@ -193,7 +198,8 @@ class Bms(Resource):
                                                LEFT JOIN bms_tbs bt
                                                ON m.mb_idx = bt.mb_idx
                                                WHERE bt.mb_idx = ?
-                                               AND m.mb_id = ?'''
+                                               AND m.mb_id = ?
+                                               AND m.status = 'Y' '''
                       , (mIdx, mId))
             b = c.fetchone()
             print(b)
