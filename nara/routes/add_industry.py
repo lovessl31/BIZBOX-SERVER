@@ -76,10 +76,11 @@ class Bms(Resource):
                 try:
                     conn = sqlite3.connect(MAIN_DB_PATH)
                     c = conn.cursor()
-
-                    member_check = c.execute('''select count(*) from member where mb_id = ? and mb_idx = ? 
-                                    and status = 'y' ''', (tInfo['idx'], tInfo['id']))
-                    if member_check.fetchone()[0] < 1:
+                    c.execute('''SELECT count(*) FROM member WHERE status = 'Y' AND mb_id = ? 
+                                      AND mb_idx = ?''', (tInfo['id'], tInfo['idx']))
+                    member_check = c.fetchone()[0]
+                    print("member_check", member_check)
+                    if 1 > member_check:
                         return errorMessage(403, '인증되지 않은 사용자입니다.')
 
                     # 문자 템플릿 유효성
@@ -140,7 +141,7 @@ class Bms(Resource):
                         select_key_data['mb_idx'] = mIdx
                         select_key_data['created_date'] = current_time
                         result = crudQuery('c', MAIN_DB_PATH, select_key_data, 'bms_tbs')
-
+                        print("result", result)
                         # 중간 테이블 데이터 삽입
                         if isinstance(result, list):
                             bms_idx = result[1]
