@@ -9,7 +9,7 @@ from nara import app, jwt_blocklist
 from flask_jwt_extended import (create_access_token, jwt_required, create_refresh_token, get_jwt,
                                 decode_token, get_jwt_identity, set_access_cookies)
 
-from flask import request, url_for, render_template, Response
+from flask import request, url_for, render_template, Response, redirect
 import json
 from dotenv import load_dotenv
 
@@ -260,6 +260,7 @@ class ResendVerify(Resource):
                 # 토큰 생성
                 token = serializer.dumps({'mb_email': user_email, 'mb_id': member_id}, salt='email-confirm')
                 link = url_for('sign_verify_email', token=token, _external=True)
+                print("재인증 link : ", link)
                 # 인증 이메일 재전송
                 send_email(user_email, '회원가입 이메일 재인증', link, 'resend_auth', member_idx)
                 return successMessage('인증 메일을 재발송 하였습니다.')
@@ -286,6 +287,22 @@ class VerifyEmail(Resource):
             crudQuery('d', MAIN_DB_PATH, None, 'member', delCondition, None, delParam)
             if get_db_data.status_code == 200:
                 return Response(render_template('auth_mail_detail.html'), mimetype='text/html')
+        except SignatureExpired:
+            return Response(render_template('auth_mail_exp.html'), mimetype='text/html')
+        except BadSignature:
+            return errorMessage(400, "Invalid token")
+
+
+
+@sign_api.route('/verify-pw/<string:token>')
+class VerifyPassword(Resource):
+    def get(self, token):
+        try:
+            # data = serializer.loads(token, salt='email-confirm', max_age=300)
+            # mb_email = data['mb_email']
+            # mb_id = data['mb_id']
+            # print("mb_email, mb_id", mb_email, mb_id)
+            return Response(render_template('auth_mail_pw_detail.html', token=token), mimetype='text/html')
         except SignatureExpired:
             return Response(render_template('auth_mail_exp.html'), mimetype='text/html')
         except BadSignature:
@@ -353,6 +370,91 @@ class CheckId(Resource):
             return errorMessage(e.status_code, e.message)
         except Exception as e:
             return errorMessage(500, str(e))
+
+
+
+@sign_api.route('/find-id')
+class FindId(Resource):
+    @sign_api.doc(description="아이디 찾기",
+                  params={'email': '사용자 email'})
+    def post(self):
+        form_data = request.form
+        dump_data = json.dumps(form_data, ensure_ascii=False)
+        data = json.loads(dump_data)
+
+        if 'email' in data:
+            conn = sqlite3.connect(MAIN_DB_PATH)
+            c = conn.cursor()
+            c.execute('''SELECT mb_id, mb_idx FROM member WHERE mb_email = ?''', (data['email'],))
+            result = c.fetchone()
+            user_id = result[0]
+            user_idx = result[1]
+            if not user_id:
+                return errorMessage(400, '해당 유저가 존재하지않습니다.')
+            send_email(data['email'], '요청하신 아이디 입니다.', user_id, 'FindId', user_idx)
+            return successMessage()
+        else:
+            return errorMessage(400, '요청 형식 및 파라미터가 잘못되었습니다.')
+
+@sign_api.route('/find-pw')
+class FindPw(Resource):
+    @sign_api.doc(description="비밀번호 찾기",
+                  params={'email': '사용자 email',
+                          'id': '사용자 id'})
+    def post(self):
+        form_data = request.form
+        dump_data = json.dumps(form_data, ensure_ascii=False)
+        data = json.loads(dump_data)
+        print("print(data)", data)
+        if data['email'] is not None and data['id'] is not None:
+            mail = data['email']
+            mId = data['id']
+            conn = sqlite3.connect(MAIN_DB_PATH)
+            c = conn.cursor()
+            c.execute('''SELECT mb_idx FROM member WHERE mb_email = ? AND mb_id = ?''', (mail, mId))
+            print(2)
+            check = c.fetchone()
+            print(1)
+            print(check)
+            if check is not None:
+                idx = check[0]
+                print("pw find idx", idx)
+                token = serializer.dumps({'mb_email': mail, 'mb_id': mId}, salt='email-confirm')
+                # 인증 이메일 전송
+                link = url_for('sign_verify_password', token=token, _external=True)
+                print("link", link)
+                re = send_email(mail, '비밀번호 재설정 메일 입니다.', link, 'FindPw', idx)
+                print(re)
+                return successMessage('메일 발송을 완료하였습니다.')
+            else:
+                return errorMessage(400, '해당 계정이 존재하지 않습니다.')
+
+@sign_api.route('/reset-password', methods=['POST'])
+class ResetPassword(Resource):
+    def post(self):
+        # 폼 데이터 가져오기
+        token = request.form.get('token')
+        new_password = request.form.get('password')
+        print("token, new_password", token, new_password)
+        try:
+            data = serializer.loads(token, salt='email-confirm', max_age=300)
+            mb_email = data['mb_email']
+            mb_id = data['mb_id']
+            # 비밀번호 해싱
+            hashed_password = generate_password_hash(new_password)
+            update_data = {"mb_pw": hashed_password}
+            condition = f"mb_email = ? AND mb_id = ?"
+            param = (mb_email, mb_id)
+            # 데이터베이스 업데이트
+            result = crudQuery('u', MAIN_DB_PATH, update_data, 'member', condition, None, param)
+            if result.status_code == 200:
+                return result
+            else:
+                return Response(render_template('auth_failed.html'), mimetype='text/html')
+        except SignatureExpired:
+            return Response(render_template('auth_mail_exp.html'), mimetype='text/html')
+        except BadSignature:
+            return errorMessage(400, "Invalid token")
 
 
 
