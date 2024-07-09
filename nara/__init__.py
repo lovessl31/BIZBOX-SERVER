@@ -49,7 +49,7 @@ def detail(bid_id):
                  LEFT JOIN bid_notice_area ba
                  ON b.np_idx = ba.np_idx
                  WHERE b.np_idx = ?
-                 AND b.created_date >= DATETIME('now', '-6 hour', 'localtime')''', (bid_id,))
+                 ''', (bid_id,))
     bid = c.fetchone()
 
     if not bid:
@@ -115,8 +115,8 @@ initUrlFor = url_for
 
 # APScheduler 설정
 scheduler = BackgroundScheduler()
-# scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger=CronTrigger(hour='0/2'))# 0시부터 24시까지
-scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger='cron', minute='*/59') # 테스트용
+scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger=CronTrigger(hour='0/2'))# 0시부터 24시까지
+# scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger='cron', minute='*/1') # 테스트용
 
 
 # 스케줄러 시작
