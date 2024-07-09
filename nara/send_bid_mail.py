@@ -79,7 +79,7 @@ def send_bid_mailing(app, initUrlFor):
                                  FROM bid_notice b 
                                  LEFT JOIN bid_notice_area ba
                                  ON b.np_idx = ba.np_idx
-                                WHERE b.created_date >= DATETIME('now', '-3 hour', 'localtime')''')
+                                WHERE b.created_date >= DATETIME('now', '-2 hour', 'localtime')''')
 
                 # 키워드가 있을 경우 조건 추가
                 if keywords_list:
