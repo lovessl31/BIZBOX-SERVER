@@ -110,19 +110,18 @@ def bzb_tbs(cursor):
                      )''')
 
     # 메일 기록 테이블
-    cursor.execute('''CREATE TABLE IF NOT EXISTS mail_log
-                     (log_idx INTEGER PRIMARY KEY,  -- 메일 기록 번호   
-                      mb_idx INTEGER NOT NULL,      -- 유저 번호             
-                      subject VARCHAR NOT NULL,     -- 제목
-                      body VARCHAR NOT NULL,        -- 내용
-                      sender VARCHAR NOT NULL,      -- 보낸 이
-                      recipient VARCHAR NOT NULL,   -- 받는 이
-                      status VARCHAR NOT NULL,      -- 메세지 응답 상태
-                      type VARCHAR NOT NULL,        -- 메일 유형
-                      sent_time DATE,               -- 전송 시간                      
-                      FOREIGN KEY (recipient) REFERENCES member(mb_email) ON DELETE CASCADE
-                      FOREIGN KEY (mb_idx) REFERENCES member(mb_idx) ON DELETE CASCADE
-                      )''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS mail_log (
+                                                 log_idx INTEGER PRIMARY KEY,       -- 메일 기록 번호   
+                                                 mb_idx INTEGER NOT NULL,           -- 유저 번호             
+                                                 subject VARCHAR(255) NOT NULL,     -- 제목
+                                                 body TEXT NOT NULL,                -- 내용
+                                                 sender VARCHAR(255) NOT NULL,      -- 보낸 이
+                                                 recipient VARCHAR(255) NOT NULL,   -- 받는 이
+                                                 status VARCHAR(50) NOT NULL,       -- 메세지 응답 상태
+                                                 type VARCHAR(50) NOT NULL,         -- 메일 유형
+                                                 sent_time TIMESTAMP,               -- 전송 시간                                                                       
+                                                 FOREIGN KEY (mb_idx) REFERENCES member(mb_idx) ON DELETE CASCADE
+                                                 )''')
 
 
     # 토큰 테이블
