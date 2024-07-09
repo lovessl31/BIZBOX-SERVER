@@ -1,4 +1,3 @@
-<!-- email_template.html -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -8,16 +7,16 @@
     <link rel="icon" href="https://url.kr/xJMnVi" type="image/png">
 </head>
 <body>
-    <div style="max-width: 700px; min-width: 280px; margin: 0 auto;">
+    <div style="max-width: 800px; min-width: 280px; margin: 0 auto; font-family: Arial, sans-serif;">
         <div style="margin:0 0px">
             <!-- header -->
-            <p style="margin:0; padding:20px 0 10px; font-size:0; line-height:0; border-bottom:3px solid #242424;">
+            <p style="margin:0; padding:20px 0 10px; border-bottom:3px solid #242424;">
                 <img src="https://url.kr/MrHyjh" alt="비즈박스로고" style="width: 132px; height: auto;">
             </p>
             <!-- content -->
             <div style="margin-top:20px; padding:40px 20px; background:#e6e8fd; text-align: center;">
                 <span style="display:block; font-size:28px; color:#242424; font-weight:600; line-height:44px;">
-                    맞춤 입찰 공고 안내</span>
+                    맞춤 입찰 공고 안내
                 </span>
             </div>
             <p style="margin:40px 0 15px; font-size:15px; color:#666; line-height:28px;">
@@ -25,57 +24,57 @@
                 고객님이 설정하신 업종코드에 해당하는 맞춤 입찰 공고 안내드립니다.<br>
                 클릭하시면 자세히 보실 수 있습니다.
             </p>
-            <div style="margin:33px 0 0 0px; text-align: center;">
-                <div style="display: table; width: 100%;">
-                    <div style="display: table-header-group; font-weight: bold; border-bottom: 2px solid #000; background-color: #f0f0f0; color: #333; font-size: 16px;">
-                        <div style="display: table-row;">
-                            <div style="display: table-cell; padding: 20px;">업종코드</div>
-                            <div style="display: table-cell; padding: 20px;">공고명</div>
-                            <div style="display: table-cell; padding: 20px;">발행처</div>
-                            <div style="display: table-cell; padding: 20px;">입찰일시</div>
-                            <div style="display: table-cell; padding: 20px;">입찰마감 일시</div>
-                        </div>
-                    </div>
-                    <div style="display: table-row-group;">
+            <div style="margin:33px 0 0 0px; text-align: center; overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background-color: #f0f0f0; color: #333; font-size: 15px; border-bottom: 2px solid #000;">
+                        <tr>
+                            <th style="padding: 20px; text-align: center;">업종코드</th>
+                            <th style="padding: 20px; text-align: center;">공고명</th>
+                            <th style="padding: 20px; text-align: center;">발행처</th>
+                            <th style="padding: 20px; text-align: center;">입찰일시</th>
+                            <th style="padding: 20px; text-align: center;">마감일시</th>
+                        </tr>
+                    </thead>
+                    <tbody style="font-size: 14px;">
                         {% for bid in bids %}
-                        <div style="display: table-row; cursor: pointer; word-break: break-word; white-space: normal;">
-                            <a href="{{ url_for('detail', bid_id=bid.bid_id, _external=True) }}"
-                               style="display: table-cell; padding: 8px; text-decoration: none;
-                                        a:link{color:red;text-decoration:none;}a:visited{color:black;text-decoration:none;}a:hover{color:blue;text-decoration:underline;}">
-                                <div style="display: table-cell; padding: 8px;">{{ bid.industry_cd }}</div>
-                                <div style="display: table-cell; padding: 8px;">{{ bid.bid_name }}</div>
-                                <div style="display: table-cell; padding: 8px;">{{ bid.bid_agency }}</div>
-                                <div style="display: table-cell; padding: 8px;">{{ bid.bid_o_dt }}</div>
-                                <div style="display: table-cell; padding: 8px;">{{ bid.bid_c_dt }}</div>
-                            </a>
-                        </div>
+                        <tr style="word-break: break-word; white-space: normal;">
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><a href="{{ url_for('detail', bid_id=bid.bid_id, _external=True) }}" style="text-decoration: none; color: inherit;">{{ bid.industry_cd }}</a></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><a href="{{ url_for('detail', bid_id=bid.bid_id, _external=True) }}" style="text-decoration: none; color: inherit;">{{ bid.bid_name }}</a></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><a href="{{ url_for('detail', bid_id=bid.bid_id, _external=True) }}" style="text-decoration: none; color: inherit;">{{ bid.bid_agency }}</a></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><a href="{{ url_for('detail', bid_id=bid.bid_id, _external=True) }}" style="text-decoration: none; color: inherit;">{{ bid.bid_o_dt }}</a></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><a href="{{ url_for('detail', bid_id=bid.bid_id, _external=True) }}" style="text-decoration: none; color: inherit;">{{ bid.bid_c_dt }}</a></td>
+                        </tr>
                         {% endfor %}
-                    </div>
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
 
         <!-- footer -->
         <div style="margin:50px 0 0; padding:10px 0 0; border-top:solid 2px #756f6a;">
-            <table width="100%" cellpadding="0" cellspacing="0">
-                <div style="padding:20px 26px 0 0; font-size:14px;">
-                    본 메일은 발신 전용이므로 회신하실 수 없습니다.
-               </div>
-				<tbody>
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-family: Arial, sans-serif;">
+                <tbody>
+                    <tr>
+                        <td>
+                            <div style="padding:20px 26px 0 0; font-size:14px;">
+                                본 메일은 발신 전용이므로 회신하실 수 없습니다.
+                           </div>
+                        </td>
+                    </tr>
                     <tr>
                         <td style="padding:27px 0 5px; color:#767676; font-size:12px; line-height:180%;">
                             전라남도 나주시 우정로 10, 라동 304호 위드퍼스트 대표이사 : 김태환 <br>
-                            사업자등록번호 : <a href="#" style="font-size:12px; color:#767676; text-decoration:none" rel="noreferrer noopener" target="_blank">220-81-02810</a>   / 이메일 : withfirst01@gmail.com
-					    </td>
+                            사업자등록번호 : <a href="#" style="font-size:12px; color:#767676; text-decoration:none" rel="noreferrer noopener" target="_blank">220-81-02810</a> / 이메일 : withfirst01@gmail.com
+                        </td>
                     </tr>
                     <tr>
-                        <td style="padding:0 0 30px; font-family:arial;color:#767676; font-size:10px; line-height:180%;">
+                        <td style="padding:0 0 30px; color:#767676; font-size:10px; line-height:180%;">
                             Copyright withfirst Co.,Ltd. All Rights Reserved.
                         </td>
                     </tr>
                 </tbody>
             </table>
-		</div>
+        </div>
     </div>
 </body>
 </html>
