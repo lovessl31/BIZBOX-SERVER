@@ -561,6 +561,7 @@ def convert_ascii_email(email):
     return ascii_email
 
 import json
+from email.utils import formataddr
 
 def service_send_email(receiver_email, subject, body, mail_type, html_content, mb_idx):
     # 이메일 설정
@@ -568,6 +569,7 @@ def service_send_email(receiver_email, subject, body, mail_type, html_content, m
     smtp_port = 587
     email_user = 'cmh0713@withfirst.com'
     email_password = os.getenv('EMAIL_SECRET_KEY')
+    sender_name = '비즈박스'
 
     # SSLContext 생성
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -575,7 +577,7 @@ def service_send_email(receiver_email, subject, body, mail_type, html_content, m
 
     # 이메일 내용 작성
     message = MIMEMultipart('alternative')
-    message["From"] = email_user
+    message["From"] = formataddr((sender_name, email_user))
     message["To"] = receiver_email
     message["Subject"] = f"[BIZBOX] {subject}"
 
@@ -620,12 +622,14 @@ def service_send_email(receiver_email, subject, body, mail_type, html_content, m
 
 from flask import render_template_string
 
+
 def send_email(receiver_email, subject, body, mail_type, mb_idx):
     # 이메일 설정
     smtp_server = 'smtp.worksmobile.com'
     smtp_port = 587
     email_user = 'cmh0713@withfirst.com'
     email_password = os.getenv('EMAIL_SECRET_KEY')
+    sender_name = '비즈박스'
 
     # SSLContext 생성
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -633,7 +637,7 @@ def send_email(receiver_email, subject, body, mail_type, mb_idx):
 
     # 이메일 내용 작성
     message = MIMEMultipart('alternative')
-    message["From"] = email_user
+    message["From"] = formataddr((sender_name, email_user))
     message["To"] = receiver_email
     message["Subject"] = f"[BIZBOX] {subject}"
 
@@ -646,6 +650,20 @@ def send_email(receiver_email, subject, body, mail_type, mb_idx):
 
         body = render_template_string(template_content, link=body)
 
+        html_part = MIMEText(body, 'html')
+        message.attach(html_part)
+    elif mail_type == 'FindId':
+        template_file = r'C:\work\NARA_CRAWL\templates\auth_mail_id.html'
+        with open(template_file, 'r', encoding='utf-8') as file:
+            template_content = file.read()
+        body = render_template_string(template_content, user_id=body)
+        html_part = MIMEText(body, 'html')
+        message.attach(html_part)
+    elif mail_type == 'FindPw':
+        template_file = r'C:\work\NARA_CRAWL\templates\auth_mail_pw.html'
+        with open(template_file, 'r', encoding='utf-8') as file:
+            template_content = file.read()
+        body = render_template_string(template_content, link=body)
         html_part = MIMEText(body, 'html')
         message.attach(html_part)
     else:
