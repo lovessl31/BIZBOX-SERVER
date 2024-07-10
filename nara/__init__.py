@@ -69,8 +69,22 @@ def detail(bid_id):
         'budget': bid[10],
         'vat': bid[11]
     }
-    print(bid_data)
-    return render_template('biz_mail_detail.html', bid=bid_data)
+
+    c.execute('''SELECT fi.domain AS url,
+                             fi.o_file_name AS file_name
+                      FROM bid_file bf 
+                      LEFT JOIN file_info fi
+                      ON bf.file_idx = fi.file_idx
+                      WHERE bf.np_idx = ?''', (bid_id,))
+    file_data = c.fetchall()
+    files = []
+    for f in file_data:
+        file_info = {
+            'url': f[0],
+            'file_name': f[1]
+        }
+        files.append(file_info)
+    return render_template('biz_mail_detail.html', bid=bid_data, files=files)
 
 
 
