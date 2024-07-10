@@ -119,8 +119,10 @@
         <div class="filedown">
             <div class="fileWrap">
                 <button class="dropbtn">
+                    {% if files|length > 0 %}
                     <img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FVwaxa%2FbtsIuJAmyxq%2FV0D61gVn7EAkWtP0ftmrT1%2Fimg.png">
                     <span>첨부파일({{ files|length }})</span>
+                    {% endif %}
                 </button>
             </div>
 
