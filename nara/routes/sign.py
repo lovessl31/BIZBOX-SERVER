@@ -290,7 +290,7 @@ class VerifyEmail(Resource):
         except SignatureExpired:
             return Response(render_template('auth_mail_exp.html'), mimetype='text/html')
         except BadSignature:
-            return errorMessage(400, "Invalid token")
+            return Response(render_template('auth_failed.html'), mimetype='text/html')
 
 
 
@@ -298,15 +298,12 @@ class VerifyEmail(Resource):
 class VerifyPassword(Resource):
     def get(self, token):
         try:
-            # data = serializer.loads(token, salt='email-confirm', max_age=300)
-            # mb_email = data['mb_email']
-            # mb_id = data['mb_id']
-            # print("mb_email, mb_id", mb_email, mb_id)
+            data = serializer.loads(token, max_age=300)
             return Response(render_template('auth_mail_pw_detail.html', token=token), mimetype='text/html')
         except SignatureExpired:
             return Response(render_template('auth_mail_exp.html'), mimetype='text/html')
         except BadSignature:
-            return errorMessage(400, "Invalid token")
+            return Response(render_template('auth_failed.html'), mimetype='text/html')
 
 @sign_api.route('/check-email')
 @sign_api.doc(description="이메일 체크",
