@@ -1,5 +1,7 @@
 import sqlite3
+import os
 import json
+from dotenv import load_dotenv
 from datetime import datetime
 import requests
 # flask 라이브러리
@@ -14,8 +16,9 @@ from nara.utils.err_handler import CustomValidException, DetailErrMessageTraceBa
 bid_api = Namespace('bid', description='사용자 등록 API', path='/biz')
 
 # DB 접속 경로
-MAIN_DB_PATH = r"C:\work\NARA_CRAWL\nara\db\bizbox.db"
-
+# MAIN_DB_PATH = r"C:\work\NARA_CRAWL\nara\db/bizbox.db"
+load_dotenv()
+MAIN_DB_PATH = os.getenv('DB_ROOT')
 
 
 

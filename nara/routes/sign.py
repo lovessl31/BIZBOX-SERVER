@@ -29,13 +29,13 @@ sign_api = Namespace('sign', description='사용자 등록 API', path='/biz')
 
 
 # DB 접속 경로
-MAIN_DB_PATH = r"C:\work\NARA_CRAWL\nara\db\bizbox.db"
+# MAIN_DB_PATH = r"C:\work\NARA_CRAWL\nara\db\bizbox.db"
+MAIN_DB_PATH = os.getenv('DB_ROOT')
+
+
 
 # 비밀키
 serializer = URLSafeTimedSerializer(os.getenv("URL_TOKEN_KEY"))
-
-
-
 
 @sign_api.route('/login')
 @sign_api.doc(description="로그인", params={'id': '사용자 이메일', 'password': '사용자 비밀 번호'})
@@ -153,8 +153,6 @@ class Logout(Resource):
             response.set_cookie(app.config['JWT_ACCESS_COOKIE_NAME'], '', expires=0)
             response.set_cookie(app.config['JWT_REFRESH_COOKIE_NAME'], '', expires=0)
             return response  # jwt_bloacklist에 jti만 넣어주고 나머지 생략하면 토큰 즉시 파괴
-        except sqlite3.Error as e:
-            return errorMessage(str(e))
         except Exception as e:
             return errorMessage(500, str(e))
 
@@ -231,6 +229,7 @@ class signup(Resource):
             except CustomValidException as e:
                 return errorMessage(e.status_code, e.message)
             except KeyError as e:
+                print(e)
                 return errorMessage(400, f"{str(e)} key가 누락되어 있습니다.")
             except sqlite3.Error as e:
                 return errorMessage(str(e))
@@ -297,12 +296,15 @@ class VerifyEmail(Resource):
 @sign_api.route('/verify-pw/<string:token>')
 class VerifyPassword(Resource):
     def get(self, token):
+        print("token", token)
         try:
-            data = serializer.loads(token, max_age=300)
+            data = serializer.loads(token, salt='email-confirm', max_age=300)
             return Response(render_template('auth_mail_pw_detail.html', token=token), mimetype='text/html')
-        except SignatureExpired:
+        except SignatureExpired as e:
+            print(str(e))
             return Response(render_template('auth_mail_exp.html'), mimetype='text/html')
-        except BadSignature:
+        except BadSignature as e:
+            print(str(e))
             return Response(render_template('auth_failed.html'), mimetype='text/html')
 
 @sign_api.route('/check-email')
@@ -416,6 +418,7 @@ class FindPw(Resource):
             if check is not None:
                 idx = check[0]
                 print("pw find idx", idx)
+
                 token = serializer.dumps({'mb_email': mail, 'mb_id': mId}, salt='email-confirm')
                 # 인증 이메일 전송
                 link = url_for('sign_verify_password', token=token, _external=True)

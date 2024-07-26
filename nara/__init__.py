@@ -7,7 +7,7 @@ import sqlite3
 import os
 
 from nara.send_bid_mail import send_bid_mailing
-
+from nara.crawl.nara_crawl_sorce import crawl_and_process
 from dotenv import load_dotenv
 from nara.utils.err_handler import CustomValidException
 from nara.utils.utils import errorMessage
@@ -17,18 +17,18 @@ from flask_jwt_extended import JWTManager
 
 
 
-app = Flask(__name__, template_folder=r'C:\work\NARA_CRAWL\templates', static_folder=r'C:\work\NARA_CRAWL\static')
+app = Flask(__name__, template_folder=r'C:\work\NARA_CRAWL/templates', static_folder=r'C:\work\NARA_CRAWL/static')
 load_dotenv()
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['DEBUG'] = os.getenv('DEBUG', default=False)
-CORS(app, resources={r"/*": {"origins": ["http://192.168.0.17:3000", "http://localhost:3000"]}}, supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": '*'}}, supports_credentials=True)
 api = Api(app, title='bizbox api 문서', description='Swagger docs', doc="/docs")
 jwt = JWTManager(app)
 
 # 커스텀 예외 처리 사용 여부
 app.config['PROPAGATE_EXCEPTIONS'] = True
 # 서버 네임 설정
-app.config['SERVER_NAME'] = '192.168.0.18:3001'
+app.config['SERVER_NAME'] = '192.168.0.18:5000'
 
 @app.errorhandler(CustomValidException)
 def handle_custom_valid_exception(error):
@@ -36,8 +36,19 @@ def handle_custom_valid_exception(error):
     return errorMessage(error.status_code, error.message)
 
 
+
 # DB 접속 경로
-MAIN_DB_PATH = r"C:\work\NARA_CRAWL\nara\db\bizbox.db"
+MAIN_DB_PATH = os.getenv('DB_ROOT')
+
+import sys
+# PROJECT_ROOT 환경 변수에서 프로젝트 루트 디렉토리 가져오기
+project_root = os.environ.get('PROJECT_ROOT', '.')
+# 프로젝트 루트 디렉토리를 sys.path에 추가
+if project_root not in sys.path:
+    print("경로:", project_root)
+    sys.path.append(os.path.abspath(project_root))
+
+
 @app.route('/detail/<int:bid_id>')
 def detail(bid_id):
     conn = sqlite3.connect(MAIN_DB_PATH)
@@ -130,14 +141,14 @@ initUrlFor = url_for
 # APScheduler 설정
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger=CronTrigger(hour='0/2'))# 0시부터 24시까지
-# scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger='cron', minute='*/1') # 테스트용
+scheduler.add_job(func=crawl_and_process, trigger=CronTrigger(minute='30'))
 
 
 # 스케줄러 시작
 try:
     if __name__ == '__main__':
         scheduler.start()
-        app.run(debug=False, use_reloader=False, port=3001, host='192.168.0.18')
+        app.run(debug=False, use_reloader=False, port=5000, host='0.0.0.0')
 except (KeyboardInterrupt, SystemExit):
     scheduler.shutdown()
 

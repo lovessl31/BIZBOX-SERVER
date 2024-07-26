@@ -1,11 +1,14 @@
 import sqlite3
 from jinja2 import Environment, FileSystemLoader
-from flask import current_app
-
 import os
+from dotenv import load_dotenv
 
+
+
+load_dotenv()
+MAIN_DB_PATH = os.getenv('DB_ROOT')
 # DB 접속 경로
-MAIN_DB_PATH = r"C:\work\NARA_CRAWL\nara\db\bizbox.db"
+
 
 def send_bid_mailing(app, initUrlFor):
     with app.app_context():
@@ -20,7 +23,7 @@ def send_bid_mailing(app, initUrlFor):
             # # 파일 가져오기
             # template = env.get_template('biz_mail_list.html')
             # 현재 파일의 디렉토리 경로
-            env = Environment(loader=FileSystemLoader(r'C:\work\NARA_CRAWL\templates'))
+            env = Environment(loader=FileSystemLoader(r'/var/www/myapp/api/templates'))
 
             # 템플릿 로딩
             template = env.get_template('biz_mail_list.html')

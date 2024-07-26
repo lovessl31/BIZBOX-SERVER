@@ -16,8 +16,12 @@ from email.mime.multipart import MIMEMultipart
 import random
 import string
 
+
+from dotenv import load_dotenv
+load_dotenv()
 # DB 접속 경로
-MAIN_DB_PATH =  r"C:\work\NARA_CRAWL\nara\db\bizbox.db"
+MAIN_DB_PATH = os.getenv('DB_ROOT')
+PROJECT_ROOT = os.getenv('PROJECT_ROOT')
 
 
 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -644,7 +648,7 @@ def send_email(receiver_email, subject, body, mail_type, mb_idx):
     # print("mail 함수 :", body)
     # HTML 템플릿 로드
     if mail_type in ['Auth', 'resend_auth']:
-        template_file = r'C:\work\NARA_CRAWL\templates\auth_mail_page.html'
+        template_file = f'{PROJECT_ROOT}\\templates\\auth_mail_page.html'
         with open(template_file, 'r', encoding='utf-8') as file:
             template_content = file.read()
 
@@ -653,14 +657,15 @@ def send_email(receiver_email, subject, body, mail_type, mb_idx):
         html_part = MIMEText(body, 'html')
         message.attach(html_part)
     elif mail_type == 'FindId':
-        template_file = r'C:\work\NARA_CRAWL\templates\auth_mail_id.html'
+        template_file = f'{PROJECT_ROOT}\\templates\\auth_mail_id.html'
         with open(template_file, 'r', encoding='utf-8') as file:
             template_content = file.read()
         body = render_template_string(template_content, user_id=body)
         html_part = MIMEText(body, 'html')
         message.attach(html_part)
     elif mail_type == 'FindPw':
-        template_file = r'C:\work\NARA_CRAWL\templates\auth_mail_pw.html'
+        template_file = f'{PROJECT_ROOT}\\templates\\auth_mail_pw.html'
+        print(template_file)
         with open(template_file, 'r', encoding='utf-8') as file:
             template_content = file.read()
         body = render_template_string(template_content, link=body)
