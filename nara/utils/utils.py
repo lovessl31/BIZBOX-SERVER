@@ -644,11 +644,13 @@ def send_email(receiver_email, subject, body, mail_type, mb_idx):
     message["From"] = formataddr((sender_name, email_user))
     message["To"] = receiver_email
     message["Subject"] = f"[BIZBOX] {subject}"
+    print("############### 1 ####################");
 
     # print("mail 함수 :", body)
-    # HTML 템플릿 로드
+    # HTML 템플릿 p로드
     if mail_type in ['Auth', 'resend_auth']:
-        template_file = f'{PROJECT_ROOT}\\templates\\auth_mail_page.html'
+        print("############### 2 ####################");
+        template_file = f'{PROJECT_ROOT}/templates/auth_mail_page.html'
         with open(template_file, 'r', encoding='utf-8') as file:
             template_content = file.read()
 
@@ -657,14 +659,16 @@ def send_email(receiver_email, subject, body, mail_type, mb_idx):
         html_part = MIMEText(body, 'html')
         message.attach(html_part)
     elif mail_type == 'FindId':
-        template_file = f'{PROJECT_ROOT}\\templates\\auth_mail_id.html'
+        print("############### 43 ####################");
+        template_file = f'{PROJECT_ROOT}/templates/auth_mail_id.html'
         with open(template_file, 'r', encoding='utf-8') as file:
             template_content = file.read()
         body = render_template_string(template_content, user_id=body)
         html_part = MIMEText(body, 'html')
         message.attach(html_part)
     elif mail_type == 'FindPw':
-        template_file = f'{PROJECT_ROOT}\\templates\\auth_mail_pw.html'
+        print("############### 5 ####################");
+        template_file = f'{PROJECT_ROOT}/templates/auth_mail_pw.html'
         print(template_file)
         with open(template_file, 'r', encoding='utf-8') as file:
             template_content = file.read()
@@ -672,21 +676,27 @@ def send_email(receiver_email, subject, body, mail_type, mb_idx):
         html_part = MIMEText(body, 'html')
         message.attach(html_part)
     else:
+        print("############### 6 ####################");
         # 평범한 텍스트 메일 작성
         text_part = MIMEText(body, 'plain')
         message.attach(text_part)
     try:
         # SMTP 서버에 연결
         # SMTP 서버에 연결
+        print("############### 7 ####################");
         with smtplib.SMTP(smtp_server, smtp_port) as smtp:
             # STARTTLS 보안 연결 시작
+            print("############### 8 ####################");
             smtp.starttls(context=context)
             # 로그인
             smtp.login(email_user, email_password)
             # SMTPUTF8 활성화
+            print("############### 9 ####################");
             smtp.ehlo()
             smtp.esmtp_features['SMTPUTF8'] = ''
+            print("############### 10 ####################");
             smtp.sendmail(email_user, receiver_email, message.as_string())
+            print("############### 11 ####################");
             save_to_database(email_user, receiver_email, subject, body, mail_type, 'Y', mb_idx)
     except Exception as e:
         print(f"메일 발송 실패: {e}")

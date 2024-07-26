@@ -42,7 +42,7 @@ def create_bzb_db():
             break
         # 사용자 정보 삽입
         cursor.execute('INSERT INTO member (mb_id, mb_email, mb_pw, mb_name, phone_number, created_date, update_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                       (user_id, email, generate_password_hash(password), name, phone_number, createDate, current_datetime, 'Y'))
+                       (user_id, email, generate_password_hash(password, method='pbkdf2:sha256'), name, phone_number, createDate, current_datetime, 'Y'))
         user_idx = cursor.lastrowid
         if user_idx is None:
             break

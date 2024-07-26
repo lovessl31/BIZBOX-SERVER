@@ -193,7 +193,7 @@ class signup(Resource):
                 current_time = datetime.datetime.now()
                 data["created_date"] = current_time.strftime('%Y-%m-%d %H:%M:%S')
                 data["update_date"] = current_time.strftime('%Y-%m-%d %H:%M:%S')
-                hashPw = generate_password_hash(data['password'])
+                hashPw = generate_password_hash(data['password'], method='pbkdf2:sha256')
                 data['password'] = hashPw
 
                 # 변경할 키
@@ -220,7 +220,7 @@ class signup(Resource):
                     link = url_for('sign_verify_email', token=token, _external=True)
                     print("link", link)
 
-                    ##send_email(new_data['mb_email'], '회원가입 이메일 인증', link, 'Auth', user_idx)
+                    send_email(new_data['mb_email'], '회원가입 이메일 인증', link, 'Auth', user_idx)
 
                     print("이메일 발송 성공")
                     return result[0]
