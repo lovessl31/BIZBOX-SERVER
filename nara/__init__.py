@@ -27,7 +27,7 @@ jwt = JWTManager(app)
 # 커스텀 예외 처리 사용 여부
 app.config['PROPAGATE_EXCEPTIONS'] = True
 # 서버 네임 설정
-app.config['SERVER_NAME'] = '192.168.0.18:5000'
+app.config['SERVER_NAME'] = 'bizbox.withfirst.com:3001'
 
 @app.errorhandler(CustomValidException)
 def handle_custom_valid_exception(error):
@@ -147,7 +147,7 @@ scheduler.add_job(func=crawl_and_process, trigger=CronTrigger(minute='30'))
 try:
     if __name__ == '__main__':
         scheduler.start()
-        app.run(debug=False, use_reloader=False, port=5000, host='0.0.0.0')
+        app.run(debug=False, use_reloader=False, port=3001, host='0.0.0.0')
 except (KeyboardInterrupt, SystemExit):
     scheduler.shutdown()
 
