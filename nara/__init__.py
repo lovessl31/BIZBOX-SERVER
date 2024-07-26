@@ -15,10 +15,9 @@ from nara.utils.utils import errorMessage
 from flask_jwt_extended import JWTManager
 
 
-
-
-app = Flask(__name__, template_folder=r'C:\work\NARA_CRAWL/templates', static_folder=r'C:\work\NARA_CRAWL/static')
 load_dotenv()
+prj_loot = os.getenv("PROJECT_ROOT")
+app = Flask(__name__, template_folder=f'{prj_loot}/templates', static_folder=f'{prj_loot}/static')
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['DEBUG'] = os.getenv('DEBUG', default=False)
 CORS(app, resources={r"/*": {"origins": '*'}}, supports_credentials=True)
