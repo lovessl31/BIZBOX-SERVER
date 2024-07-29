@@ -9,7 +9,7 @@ load_dotenv()
 MAIN_DB_PATH = get_config()['DATABASE']
 print("send_bid_mail_path", MAIN_DB_PATH)
 # DB 접속 경로
-
+print(1111111)
 
 def send_bid_mailing(app, initUrlFor):
     with app.app_context():
@@ -17,20 +17,33 @@ def send_bid_mailing(app, initUrlFor):
             # init에서 실행할때 순환종속성 문제가 생기기때문에 함수가 필요할때 가져오기
             from nara.utils.utils import service_send_email
             from nara.utils.err_handler import DetailErrMessageTraceBack
-
             conn = sqlite3.connect(MAIN_DB_PATH)
             c = conn.cursor()
             # env = Environment(loader=FileSystemLoader('nara/resources/html'))
             # # 파일 가져오기
             # template = env.get_template('biz_mail_list.html')
             # 현재 파일의 디렉토리 경로
-            env = Environment(loader=FileSystemLoader(f'{os.getenv("PROJECT_ROOT")}/templates'))
+            print(os.getenv("DEV_PJ_ROOT"))
+            if os.getenv('APP_ENV') == 'dev':
+                template_path = os.path.join(os.getenv("DEV_PJ_ROOT"), 'templates')
+                template_path = template_path.replace("\\", "/")
+                env = Environment(loader=FileSystemLoader(template_path))
+            else:
+                template_path = os.path.join(os.getenv("PROJECT_ROOT"), 'templates')
+                template_path = template_path.replace("\\", "/")
+                env = Environment(loader=FileSystemLoader(template_path))
+
+
+            # 템플릿 경로가 실제로 존재하는지 확인합니다
+            if not os.path.exists(template_path):
+                raise FileNotFoundError(f'Template path does not exist: {template_path}')
+            else:
+                print(f'Template path exists: {template_path}')
+
 
             # 템플릿 로딩
             template = env.get_template('biz_mail_list.html')
-
-
-
+            print("template", template)
             # 서브 쿼리를 사용하지않고 조인을 사용하면 업종코드 별로 데이터가 생성되기에 notice_list 를 여러번 도는 비효율적인 로직임으로 서브쿼리를 사용해
             # 유저가 속한 업종코드들을 하나의 컬럼으로 묶어서 가져와 해당하는 업종공고로 메일로 보내줄수 있어 최대 3배의 효율을 낼수 있음
             
@@ -48,7 +61,7 @@ def send_bid_mailing(app, initUrlFor):
                          FROM bms_tbs t
                          ''')
             bms_data_list = c.fetchall()
-
+            print(22222222222222222222222222222222)
             print('_', bms_data_list)
             if not bms_data_list:
                 print("No recipients found")
@@ -62,7 +75,10 @@ def send_bid_mailing(app, initUrlFor):
                 user_area_cd = bms[2]
                 user_task_cd = bms[3]
                 user_industry_cd = bms[4]
-                keywords_list = bms[5].split(',')
+                keywords_cd_list = bms[5]  # keyword_cd_list 값이 None일 수 있으므로 확인 필요
+                keywords_list = []  # keywords_list 초기화
+                if keywords_cd_list:
+                    keywords_list = keywords_cd_list.split(',')  # None 체크 후 split
 
                 mb_idx = bms[6]
 
@@ -84,7 +100,6 @@ def send_bid_mailing(app, initUrlFor):
                                  LEFT JOIN bid_notice_area ba
                                  ON b.np_idx = ba.np_idx
                                 WHERE b.created_date >= DATETIME('now', '-2 hour', 'localtime')''')
-
                 # 키워드가 있을 경우 조건 추가
                 if keywords_list:
                     # 각 키워드를 np_title과 demand_agency에 대해 조건 추가
@@ -105,6 +120,7 @@ def send_bid_mailing(app, initUrlFor):
                     final_query = base_query
 
                 c.execute(final_query)
+
                 notice_list = c.fetchall()
                 print("키워드 검색한 입찰 공고 리스트", notice_list)
 

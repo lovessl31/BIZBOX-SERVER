@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, url_for
+from flask import Flask, request, render_template
 from flask_restx import Api
 from flask_cors import CORS
 
@@ -20,13 +20,10 @@ from config import get_config
 
 load_dotenv()
 
-prj_loot = os.getenv("PROJECT_ROOT")
-print("############################################")
-print("############################################")
-print(prj_loot)
-print("############################################")
-print("############################################")
-print("############################################")
+if os.getenv('APP_ENV') == 'prod':
+    prj_loot = os.getenv("PROJECT_ROOT")
+else:
+    prj_loot = os.getenv("DEV_PJ_ROOT")
 
 # sys.path에 프로젝트 루트 디렉토리 추가
 import sys
@@ -134,28 +131,11 @@ from nara.routes.add_industry import bid_api
 api.add_namespace(sign_api)
 api.add_namespace(bid_api)
 
-# 백그라운드 작업 스케줄러
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
-
-
-# bid_mailing 함수에게 인자로 넘겨주자
-initUrlFor = url_for
-
-
-# APScheduler 설정
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger=CronTrigger(hour='0/2'))# 0시부터 24시까지
-scheduler.add_job(func=crawl_and_process, trigger=CronTrigger(minute='30'))
-
-
 # 스케줄러 시작
-try:
-    if __name__ == '__main__':
-        scheduler.start()
-        app.run(debug=False, use_reloader=False, port=3001, host='0.0.0.0')
-except (KeyboardInterrupt, SystemExit):
-    scheduler.shutdown()
+
+if __name__ == '__main__':
+   app.run(debug=False, use_reloader=False, port=3001, host='0.0.0.0')
+
 
 
 

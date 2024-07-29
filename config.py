@@ -19,7 +19,7 @@ def get_config():
     if environment == 'dev':
         base_config.update({
             'DEBUG': True,
-            'SERVER_NAME': '192.168.0.18',
+            'SERVER_NAME': '192.168.0.18:3001',
             'DATABASE': os.getenv('DEV_DB_ROOT'),
         })
     elif environment == 'prod':

@@ -20,3 +20,4 @@ echo "Starting Gunicorn with configuration..." >> $LOGFILE
 cd /var/www/bizbox-server || { echo 'Failed to change directory to /var/www/bizbox-server' >> $ERRORLOGFILE; exit 1; }
 /root/anaconda3/envs/bizbox/bin/gunicorn -c gunicorn_config.py nara:app >> $LOGFILE 2>> $ERRORLOGFILE || { echo 'Failed to start Gunicorn' >> $ERRORLOGFILE; exit 1; }
 
+python /var/www/bizbox-server/nara/scheduler.py >> /var/log/nara_scheduler.log 2>&1

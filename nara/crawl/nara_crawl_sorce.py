@@ -501,13 +501,13 @@ def save_to_json(articles, current_dir, current_dt, industry_cd):
 # json 저장
 def main(industry_cd):
     try:
-        current_dir = os.getcwd()
+        current_dir = f"{os.getcwd()}/crawl"
         # 백슬래시를 슬래시로 교체
         current_dir = current_dir.replace("\\", "/")
 
         # 현재 디렉토리
         if os.getenv('APP_ENV') == 'prod':
-            pass
+            current_dir = f"{current_dir}/prod"
         elif os.getenv('APP_ENV') == 'dev':
             current_dir = f"{current_dir}/dev"
         print("current_dir: ", current_dir)
