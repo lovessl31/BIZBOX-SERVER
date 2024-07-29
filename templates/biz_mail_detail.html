@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>맞춤 입찰 공고 상세 정보</title>
+    <link rel="icon" href="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FqtTfo%2FbtsIrPBD964%2FklYKeNCemwdfQtSAuwlwz0%2Fimg.png" type="image/png">
+    <style>
+
+        .logo {
+            width: 100%;
+            height: auto;
+            text-align: center;
+            margin-top: 60px;
+        }
+
+        .title h4 {
+            font-size: 45px;
+            font-weight: 700;
+            text-align: center;
+            margin: 0;
+            margin-top: 10px;
+            margin-bottom: 30px;
+            letter-spacing: -5px;
+        }
+
+        .bid-announcement-table table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .bid-announcement-table td {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .bid-announcement-table .title-column {
+            width: 20%;
+            text-align: center;
+            background-color: #f2f2f2;
+        }
+
+        .bid-announcement-table strong {
+            color: #333333;
+        }
+
+        .filedown {
+            display: flex;
+
+        }
+
+        .dropbtn {
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .filedown {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 20px;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+
+        /* 드롭다운 내용 링크 스타일 */
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 11px;
+        }
+
+        .dropdown-content a:hover {background-color: #f1f1f1}
+
+        .filedown:hover .dropdown-content {
+            display: block;
+        }
+
+        .fileWrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dropbtn img {
+            margin-right: 3px;
+        }
+
+    </style>
+</head>
+<body>
+    <div style="max-width: 700px; min-width: 280px; margin: 0 auto;">
+        <div class="logo">
+            <img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FLY2uI%2FbtsIqy8BOvf%2Fg1BIcn8PhA46UKEIhJX9iK%2Fimg.png" alt="비즈박스로고">
+        </div>
+        <div class="title">
+            <h4>맞춤 입찰 공고 상세 정보</h4>
+        </div>
+
+        <div class="filedown">
+            <div class="fileWrap">
+                <button class="dropbtn">
+                    <img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FVwaxa%2FbtsIuJAmyxq%2FV0D61gVn7EAkWtP0ftmrT1%2Fimg.png">
+                    {% if files|length > 0 %}
+                    <span>첨부파일({{ files|length }})</span>
+                    {% endif %}
+                </button>
+            </div>
+
+            <div class="dropdown-content">
+                {% for file in files %}
+                <a href="{{ file.url }}" download>{{file.file_name}}</a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bid-announcement-table">
+            <table>
+                <tbody>
+                    <tr>
+                        <td class="title-column"><strong>업종코드</strong></td>
+                        <td>{{ bid.industry_cd }}</td>
+                    </tr>
+                    <tr>
+                        <td class="title-column"><strong>공고명</strong></td>
+                        <td>{{ bid.bid_name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="title-column"><strong>공고번호</strong></td>
+                        <td>{{ bid.uniqueCd }}</td>
+                    </tr>
+                    <tr>
+                        <td class="title-column "><strong>발행처</strong></td>
+                        <td>{{ bid.bid_agency }}</td>
+                    </tr>
+                    <tr>
+                        <td class="title-column "><strong>참가가능지역</strong></td>
+                        <td>{{ bid.area_name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="title-column "><strong>입찰일시</strong></td>
+                        <td>{{ bid.bid_o_dt }}</td>
+                    </tr>
+                    <tr>
+                        <td class="title-column "><strong>입찰마감 일시</strong></td>
+                        <td>{{ bid.bid_c_dt }}</td>
+                    </tr>
+                    <tr>
+                        <td class="title-column "><strong>사업 금액</strong></td>
+                        <td>{{ bid.amount }}</td>
+                    </tr>
+                    <tr>
+                        <td class="title-column "><strong>추정 예산</strong></td>
+                        <td>{{ bid.est_prise }}</td>
+                    </tr>
+                    <tr>
+                        <td class="title-column "><strong>배정 예산</strong></td>
+                        <td>{{ bid.budget }}</td>
+                    </tr>
+                    <tr>
+                        <td class="title-column "><strong>부가세</strong></td>
+                        <td>{{ bid.vat }}</td>
+                    </tr>
+                    <tr>
+                        <td class="title-column "><strong>주요 내용</strong></td>
+                        <td>{{ bid.area_name }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- footer -->
+        <div style="margin: 50px 0 0; padding: 10px 0 0; border-top: solid 2px #756f6a;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tbody>
+                    <tr>
+                        <td style="padding: 27px 0 5px; color: #767676; font-size: 12px; line-height: 180%;">
+                            전라남도 나주시 우정로 10, 라동 304호 위드퍼스트 대표이사 : 김태환 <br>
+                            사업자등록번호 : <a href="#" style="font-size: 12px; color: #767676; text-decoration: none;" rel="noreferrer noopener" target="_blank">220-81-02810</a>   / 이메일 : withfirst01@gmail.com
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0 0 30px; font-family: arial; color: #767676; font-size: 10px; line-height: 180%;">
+                            Copyright withfirst Co.,Ltd. All Rights Reserved.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
