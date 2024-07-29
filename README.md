@@ -12,10 +12,11 @@
 5. 방법 1. 터미널 창에서 pwd 로 경로 확인 후 $env:PYTHONPATH = "프로젝트 경로" 를 등록한다 <br>
     방법 2. .env 파일에서 PROJECT_ROOT 변수에 프로젝트 경로를 입력한다.<br>
 6. db_manager.py 파일을 실행하여 db 생성 및 더미 데이터 인서트 이미 파일이 있다면 생략<br>
-7. 프로젝트 경로/nara/db 경로에 bizbox.db 파일이 생성 됐는지 확인<br>
-8. env파일에서 db경로 및 프로젝트 경로 입력
-9. init 파일에 서버네임 설정은 호스트 설정이 안되어있으면 ip:port 로 구성한다.
-10. 프로젝트 경로/nara/__init__.py 파일을 실행하여 flask 서버 가동한다. <br>
+7. 프로젝트 경로/nara/db 경로에 bizbox.db 및 dev_bizbox.db 파일이 생성 됐는지 확인<br>
+8. env파일에서 프로젝트 환경 및 db경로 및 프로젝트 경로 입력
+9. config.py 파일에 플라스크 환경설정이 있는데 SERVER NAME을 각 pc에 맡게 세팅 
+10. init 파일에 서버네임 설정은 호스트 설정이 안되어있으면 ip:port 로 구성한다.
+11. 프로젝트 경로/nara/__init__.py 파일을 실행하여 flask 서버 가동한다. <br>
     (리눅스 터미널창에서 pwd 를 입력해서 경로를 확인하고 넣으면 된다.)
 
 

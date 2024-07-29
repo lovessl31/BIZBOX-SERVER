@@ -1,7 +1,6 @@
 from flask import Flask, request, render_template, url_for
 from flask_restx import Api
 from flask_cors import CORS
-from datetime import timedelta
 
 import sqlite3
 import os
@@ -13,29 +12,46 @@ from nara.utils.err_handler import CustomValidException
 from nara.utils.utils import errorMessage
 # jwt
 from flask_jwt_extended import JWTManager
+# config
+from config import get_config
+
+
 
 
 load_dotenv()
+
 prj_loot = os.getenv("PROJECT_ROOT")
 print("############################################")
 print("############################################")
-print(prj_loot);
+print(prj_loot)
 print("############################################")
 print("############################################")
 print("############################################")
+
+# sys.path에 프로젝트 루트 디렉토리 추가
+import sys
+if prj_loot not in sys.path:
+    print("경로:", prj_loot)
+    sys.path.append(os.path.abspath(prj_loot))
+
+
 app = Flask(__name__, template_folder=f'{prj_loot}/templates', static_folder=f'{prj_loot}/static')
-
-
-app.secret_key = os.getenv('SECRET_KEY')
-app.config['DEBUG'] = os.getenv('DEBUG', default=False)
 CORS(app, resources={r"/*": {"origins": '*'}}, supports_credentials=True)
 api = Api(app, title='bizbox api 문서', description='Swagger docs', doc="/docs")
 jwt = JWTManager(app)
 
-# 커스텀 예외 처리 사용 여부
-app.config['PROPAGATE_EXCEPTIONS'] = True
-# 서버 네임 설정
-app.config['SERVER_NAME'] = 'bizbox.withfirst.com:3001'
+
+
+# Get configuration based on the environment
+biz_config = get_config()
+print(biz_config)
+# Flask 앱 설정
+app.config.update(biz_config)
+
+# biz_config = get_config()
+#
+# # Flask 앱 설정
+# app.config.update(biz_config)
 
 @app.errorhandler(CustomValidException)
 def handle_custom_valid_exception(error):
@@ -45,16 +61,7 @@ def handle_custom_valid_exception(error):
 
 
 # DB 접속 경로
-MAIN_DB_PATH = os.getenv('DB_ROOT')
-
-import sys
-# PROJECT_ROOT 환경 변수에서 프로젝트 루트 디렉토리 가져오기
-project_root = os.environ.get('PROJECT_ROOT', '.')
-# 프로젝트 루트 디렉토리를 sys.path에 추가
-if project_root not in sys.path:
-    print("경로:", project_root)
-    sys.path.append(os.path.abspath(project_root))
-
+MAIN_DB_PATH = app.config.get('DATABASE')  # Use .get() to avoid KeyError
 
 @app.route('/detail/<int:bid_id>')
 def detail(bid_id):
@@ -118,15 +125,6 @@ def check_if_token_in_blocklist(jwt_header, jwt_payload):
     else:
         # 다른 요청에 대해서는 블록 리스트 확인하지 않음
         return False
-
-# JWT 및 앱설정
-app.config['JWT_SECRET_KEY'] = os.getenv("T_S_KEY")
-app.config['SECRET_KEY'] = os.getenv("S_KEY")
-access_exp = timedelta(minutes=30)
-refresh_exp = timedelta(days=3)
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = access_exp
-app.config['JWT_REFRESH_TOKEN_EXPIRES'] = refresh_exp
-
 
 
 from nara.routes.sign import sign_api

@@ -21,6 +21,7 @@ from nara.utils.utils import (convert_size, get_file_type_and_extension, insert_
                               generate_unique_filename, insert_bid_notice, generate_bidNo)
 from nara.utils.err_handler import CustomException
 
+from config import get_config
 # 로그 기록
 import sys
 import logging
@@ -29,9 +30,9 @@ import logging
 from dotenv import load_dotenv
 load_dotenv()
 # DB 접속 경로
-MAIN_DB_PATH = os.getenv('DB_ROOT')
 
-
+MAIN_DB_PATH = get_config()['DATABASE']
+print(MAIN_DB_PATH)
 
 # 기본 로거 생성 후 출력 기준 설정
 logger = logging.getLogger()
@@ -474,6 +475,7 @@ def to_more(page_no, current_dt, industry_cd):
 def save_to_json(articles, current_dir, current_dt, industry_cd):
     # JSON 파일 저장할 디렉토리 생성
     json_dir = os.path.join(current_dir, 'json', current_dt)
+    json_dir = json_dir.replace("\\", "/")
     os.makedirs(json_dir, exist_ok=True)
 
     # 기존 JSON 파일 읽어오기
@@ -499,8 +501,15 @@ def save_to_json(articles, current_dir, current_dt, industry_cd):
 # json 저장
 def main(industry_cd):
     try:
-        # 현재 디렉토리
         current_dir = os.getcwd()
+        # 백슬래시를 슬래시로 교체
+        current_dir = current_dir.replace("\\", "/")
+
+        # 현재 디렉토리
+        if os.getenv('APP_ENV') == 'prod':
+            pass
+        elif os.getenv('APP_ENV') == 'dev':
+            current_dir = f"{current_dir}/dev"
         print("current_dir: ", current_dir)
         path_dt = datetime.now().strftime("%Y-%m-%d")
 
@@ -601,7 +610,3 @@ def crawl_and_process():
             print(f"{identifier} 작업 중 중복값이 발견되어 종료되었습니다.")
         except TimeoutError:
             main(identifier)  # [WinError 10060] → 너무 빠른 크롤링으로 인한 로봇으로 판단 => 재요청
-
-
-
-

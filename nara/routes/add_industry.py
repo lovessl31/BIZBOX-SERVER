@@ -3,6 +3,7 @@ import os
 import json
 from dotenv import load_dotenv
 from datetime import datetime
+from nara import app
 import requests
 # flask 라이브러리
 from flask import request
@@ -18,8 +19,8 @@ bid_api = Namespace('bid', description='사용자 등록 API', path='/biz')
 # DB 접속 경로
 # MAIN_DB_PATH = r"C:\work\NARA_CRAWL\nara\db/bizbox.db"
 load_dotenv()
-MAIN_DB_PATH = os.getenv('DB_ROOT')
-
+# MAIN_DB_PATH = os.getenv('DB_ROOT')
+MAIN_DB_PATH = app.config['DATABASE']
 
 
 # 중복 코드 함수화

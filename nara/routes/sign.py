@@ -30,8 +30,8 @@ sign_api = Namespace('sign', description='사용자 등록 API', path='/biz')
 
 # DB 접속 경로
 # MAIN_DB_PATH = r"C:\work\NARA_CRAWL\nara\db\bizbox.db"
-MAIN_DB_PATH = os.getenv('DB_ROOT')
-
+# MAIN_DB_PATH = os.getenv('DB_ROOT')
+MAIN_DB_PATH = app.config['DATABASE']
 
 
 # 비밀키
