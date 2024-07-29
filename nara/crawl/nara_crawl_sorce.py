@@ -478,7 +478,7 @@ def save_to_json(articles, current_dir, current_dt, industry_cd):
 
     # 기존 JSON 파일 읽어오기
     json_filename = f'Narticles_{industry_cd}.json'
-    json_path = f"{json_dir}\\{json_filename}"
+    json_path = f"{json_dir}/{json_filename}"
 
     existing_articles = []
     if os.path.exists(json_path):
