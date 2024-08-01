@@ -9,6 +9,7 @@
 # 크롤링한 데이터들 제외
 nara/crawl/json/
 nara/crawl/Nattachment/
+nara/crawl/dev/
 # nara/db/bizbox.db
 # env 파일 제외
 # nara/.env

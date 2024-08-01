@@ -16,11 +16,13 @@ from email.mime.multipart import MIMEMultipart
 import random
 import string
 
-
+from config import get_config
 from dotenv import load_dotenv
 load_dotenv()
 # DB 접속 경로
-MAIN_DB_PATH = os.getenv('DB_ROOT')
+MAIN_DB_PATH = get_config()['DATABASE']
+print("utils:", MAIN_DB_PATH)
+# MAIN_DB_PATH = os.getenv('DB_ROOT')
 PROJECT_ROOT = os.getenv('PROJECT_ROOT')
 
 

@@ -1,7 +1,6 @@
-from flask import Flask, request, render_template, url_for
+from flask import Flask, request, render_template
 from flask_restx import Api
 from flask_cors import CORS
-from datetime import timedelta
 
 import sqlite3
 import os
@@ -13,29 +12,43 @@ from nara.utils.err_handler import CustomValidException
 from nara.utils.utils import errorMessage
 # jwt
 from flask_jwt_extended import JWTManager
+# config
+from config import get_config
+
+
 
 
 load_dotenv()
-prj_loot = os.getenv("PROJECT_ROOT")
-print("############################################")
-print("############################################")
-print(prj_loot);
-print("############################################")
-print("############################################")
-print("############################################")
+
+if os.getenv('APP_ENV') == 'prod':
+    prj_loot = os.getenv("PROJECT_ROOT")
+else:
+    prj_loot = os.getenv("DEV_PJ_ROOT")
+
+# sys.path에 프로젝트 루트 디렉토리 추가
+import sys
+if prj_loot not in sys.path:
+    print("경로:", prj_loot)
+    sys.path.append(os.path.abspath(prj_loot))
+
+
 app = Flask(__name__, template_folder=f'{prj_loot}/templates', static_folder=f'{prj_loot}/static')
-
-
-app.secret_key = os.getenv('SECRET_KEY')
-app.config['DEBUG'] = os.getenv('DEBUG', default=False)
 CORS(app, resources={r"/*": {"origins": '*'}}, supports_credentials=True)
 api = Api(app, title='bizbox api 문서', description='Swagger docs', doc="/docs")
 jwt = JWTManager(app)
 
-# 커스텀 예외 처리 사용 여부
-app.config['PROPAGATE_EXCEPTIONS'] = True
-# 서버 네임 설정
-app.config['SERVER_NAME'] = 'bizbox.withfirst.com:3001'
+
+
+# Get configuration based on the environment
+biz_config = get_config()
+print(biz_config)
+# Flask 앱 설정
+app.config.update(biz_config)
+
+# biz_config = get_config()
+#
+# # Flask 앱 설정
+# app.config.update(biz_config)
 
 @app.errorhandler(CustomValidException)
 def handle_custom_valid_exception(error):
@@ -45,16 +58,7 @@ def handle_custom_valid_exception(error):
 
 
 # DB 접속 경로
-MAIN_DB_PATH = os.getenv('DB_ROOT')
-
-import sys
-# PROJECT_ROOT 환경 변수에서 프로젝트 루트 디렉토리 가져오기
-project_root = os.environ.get('PROJECT_ROOT', '.')
-# 프로젝트 루트 디렉토리를 sys.path에 추가
-if project_root not in sys.path:
-    print("경로:", project_root)
-    sys.path.append(os.path.abspath(project_root))
-
+MAIN_DB_PATH = app.config.get('DATABASE')  # Use .get() to avoid KeyError
 
 @app.route('/detail/<int:bid_id>')
 def detail(bid_id):
@@ -119,15 +123,6 @@ def check_if_token_in_blocklist(jwt_header, jwt_payload):
         # 다른 요청에 대해서는 블록 리스트 확인하지 않음
         return False
 
-# JWT 및 앱설정
-app.config['JWT_SECRET_KEY'] = os.getenv("T_S_KEY")
-app.config['SECRET_KEY'] = os.getenv("S_KEY")
-access_exp = timedelta(minutes=30)
-refresh_exp = timedelta(days=3)
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = access_exp
-app.config['JWT_REFRESH_TOKEN_EXPIRES'] = refresh_exp
-
-
 
 from nara.routes.sign import sign_api
 from nara.routes.add_industry import bid_api
@@ -136,28 +131,11 @@ from nara.routes.add_industry import bid_api
 api.add_namespace(sign_api)
 api.add_namespace(bid_api)
 
-# 백그라운드 작업 스케줄러
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
-
-
-# bid_mailing 함수에게 인자로 넘겨주자
-initUrlFor = url_for
-
-
-# APScheduler 설정
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=lambda: send_bid_mailing(app, initUrlFor), trigger=CronTrigger(hour='0/2'))# 0시부터 24시까지
-scheduler.add_job(func=crawl_and_process, trigger=CronTrigger(minute='30'))
-
-
 # 스케줄러 시작
-try:
-    if __name__ == '__main__':
-        scheduler.start()
-        app.run(debug=False, use_reloader=False, port=3001, host='0.0.0.0')
-except (KeyboardInterrupt, SystemExit):
-    scheduler.shutdown()
+
+if __name__ == '__main__':
+   app.run(debug=False, use_reloader=False, port=3001, host='0.0.0.0')
+
 
 
 
